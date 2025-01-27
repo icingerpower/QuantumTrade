@@ -29,6 +29,18 @@ set(PROJECT_SOURCES
         gui/MainWindow.cpp
         gui/MainWindow.h
         gui/MainWindow.ui
+        gui/PaneTemplates.cpp
+        gui/PaneTemplates.h
+        gui/PaneTemplates.ui
+        gui/PaneModels.h
+        gui/PaneModels.cpp
+        gui/PaneModels.ui
+        gui/PaneSimulation.h
+        gui/PaneSimulation.cpp
+        gui/PaneSimulation.ui
+        gui/PaneData.h
+        gui/PaneData.cpp
+        gui/PaneData.ui
         ${TRADING_FILES}
         ${WORKING_DIR_FILES}
 )

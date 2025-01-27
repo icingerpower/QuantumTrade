@@ -13,7 +13,66 @@
   <property name="windowTitle">
    <string>Quantum Trade</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QListWidget" name="listWidgetMenu">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>30</height>
+       </size>
+      </property>
+      <property name="flow">
+       <enum>QListView::LeftToRight</enum>
+      </property>
+      <item>
+       <property name="text">
+        <string>Templates</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Models</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Simulations</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Data</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item>
+     <widget class="QStackedWidget" name="stackedWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="PaneTemplates" name="pageTemplates"/>
+      <widget class="PaneModels" name="pageModels"/>
+      <widget class="PaneSimulation" name="pageSimulation"/>
+      <widget class="PaneData" name="pageData"/>
+     </widget>
+    </item>
+   </layout>
+  </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
@@ -26,6 +85,49 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PaneTemplates</class>
+   <extends>QWidget</extends>
+   <header>gui/PaneTemplates.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PaneModels</class>
+   <extends>QWidget</extends>
+   <header>gui/PaneModels.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PaneData</class>
+   <extends>QWidget</extends>
+   <header>gui/PaneData.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PaneSimulation</class>
+   <extends>QWidget</extends>
+   <header>gui/PaneSimulation.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>listWidgetMenu</sender>
+   <signal>currentRowChanged(int)</signal>
+   <receiver>stackedWidget</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>396</x>
+     <y>151</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>494</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
