@@ -31,7 +31,7 @@ private:
     static const QHash<QString, QString> HASH_TICK;
     static const QHash<QString, QString> HASH_VALUE_TYPES;
     QList<QSharedPointer<std::future<void>>> m_futures;
-    QList<QDate> generateMonths(const QDate &startDate, const QDate &endDate)
+    QList<QDate> generateMonths(const QDate &startDate, const QDate &endDate) const;
     void _clearFinishedFutures();
 
 };
