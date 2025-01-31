@@ -11,8 +11,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Sql)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Sql Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Network)
 
 
 set(PROJECT_VERSION_MAJOR 3)
@@ -41,7 +41,7 @@ set(PROJECT_SOURCES
         gui/PaneData.h
         gui/PaneData.cpp
         gui/PaneData.ui
-        ${TRADING_FILES}
+        ${MODEL_FILES}
         ${WORKING_DIR_FILES}
 )
 
@@ -70,6 +70,7 @@ endif()
 
 target_link_libraries(QuantumTrade PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Network
     Qt${QT_VERSION_MAJOR}::Sql)
 
 set_target_properties(QuantumTrade PROPERTIES

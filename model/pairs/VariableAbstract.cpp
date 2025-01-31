@@ -5,21 +5,9 @@
 #include <QDir>
 #include <QDebug>
 
-#include "StreamReaderAbstract.h"
 #include "ExceptionVariableDb.h"
 
 #include "VariableAbstract.h"
-
-const Tick VariableAbstract::TICK_MIN_15{"15min", QObject::tr("15 minutes"), 15*60};
-const Tick VariableAbstract::TICK_HOUR_1{"1hour", QObject::tr("1 hour"), 60*60};
-const Tick VariableAbstract::TICK_HOUR_4{"4hours", QObject::tr("4 hours"), 60*60*4};
-const Tick VariableAbstract::TICK_DAY_1{"1day", QObject::tr("1 day"), 60*60*24};
-const QList<Tick> VariableAbstract::TICKS{
-    TICK_MIN_15
-    , TICK_HOUR_1
-    , TICK_HOUR_4
-    , TICK_DAY_1
-};
 
 const VariableAbstract::TypeValue VariableAbstract::TYPE_VALUE_OPEN{"Open", QObject::tr("Open")};
 const VariableAbstract::TypeValue VariableAbstract::TYPE_VALUE_CLOSE{"Close", QObject::tr("Close")};
@@ -34,8 +22,6 @@ const QList<VariableAbstract::TypeValue> VariableAbstract::TYPE_VALUES{
     , TYPE_VALUE_VOLUME
 };
 
-std::vector<std::thread> VariableAbstract::THREADS;
-QList<const VariableAbstract *> VariableAbstract::ALL_VARIABLES;
 QString VariableAbstract::DB_FOLDER_PATH;
 
 void VariableAbstract::setDatabaseFolder(const QString &dbFolderPath)
@@ -43,10 +29,70 @@ void VariableAbstract::setDatabaseFolder(const QString &dbFolderPath)
     DB_FOLDER_PATH = dbFolderPath;
 }
 
+QDateTime VariableAbstract::readLastDateTime(const Tick &tick) const
+{
+    QDateTime lastDateTime;
+    QSqlDatabase db = getDatabaseOpened(tick.id());
+    if (!db.isOpen())
+    {
+        qWarning() << "Database is not open for Tick ID:" << tick.id();
+        return lastDateTime; // Returns an invalid QDateTime
+    }
+
+    // 2. Define the table name (ensure it matches the one used in recordInDatabase)
+    const QString tableName = QStringLiteral("measurements");
+
+    // 3. Check if the table exists
+    if (!db.tables().contains(tableName))
+    {
+        qWarning() << "Table" << tableName << "does not exist in the database.";
+        return lastDateTime; // Returns an invalid QDateTime
+    }
+
+    // 4. Prepare the SELECT MAX(dateTime) query
+    QString selectMaxQueryStr = QString("SELECT MAX(dateTime) FROM %1").arg(tableName);
+
+    QSqlQuery query(db);
+    if (!query.exec(selectMaxQueryStr))
+    {
+        qWarning() << "Error executing SELECT MAX query:" << query.lastError().text();
+        return lastDateTime; // Returns an invalid QDateTime
+    }
+
+    // 5. Process the query result
+    if (query.next())
+    {
+        QVariant maxDateVariant = query.value(0);
+        if (!maxDateVariant.isNull())
+        {
+            // Convert the retrieved string to QDateTime using ISO8601 format
+            lastDateTime = QDateTime::fromString(maxDateVariant.toString(), Qt::ISODate);
+            if (!lastDateTime.isValid())
+            {
+                qWarning() << "Invalid dateTime format retrieved:" << maxDateVariant.toString();
+                // Optionally, you can handle this case differently, e.g., throw an exception
+            }
+        }
+        else
+        {
+            qWarning() << "No records found in table" << tableName << "for Tick ID:" << tick.id();
+            // lastDateTime remains invalid
+        }
+    }
+    else
+    {
+        qWarning() << "Failed to retrieve MAX(dateTime) from table" << tableName;
+        // lastDateTime remains invalid
+    }
+    return lastDateTime;
+}
+
+/*
+std::vector<std::thread> VariableAbstract::THREADS;
 QSet<StreamReaderAbstract *> VariableAbstract::allStreamReaders()
 {
     QSet<StreamReaderAbstract *> streamReaders;
-    for (const auto &variable : ALL_VARIABLES)
+    for (const auto &variable : std::as_const(ALL_VARIABLES_BY_SYMBOL))
     {
         const auto &reader = variable->streamReader();
         if (reader != nullptr)
@@ -84,6 +130,7 @@ void VariableAbstract::stopReadingAllStreams()
     }
     THREADS.clear();
 }
+//*/
 
 QSharedPointer<std::vector<double> > VariableAbstract::readData(
         const Tick &tick,
@@ -102,8 +149,9 @@ QSharedPointer<std::vector<double> > VariableAbstract::readData(
     const QString tableName = QStringLiteral("measurements");
 
     // 3. Check if the column exists
+    const QString &colName = this->colName(typeValueId);
     QSqlRecord tableRecord = db.record(tableName);
-    if (tableRecord.indexOf(typeValueId) == -1)
+    if (tableRecord.indexOf(colName) == -1)
     {
         qWarning() << "Column" << typeValueId << "does not exist in table" << tableName;
         return QSharedPointer<std::vector<double>>(); // Return a null shared pointer
@@ -200,17 +248,18 @@ VariableAbstract::readData(
     //    plus dateTime, filtered by [dateFrom, dateTo].
     //    We'll store results in a hash of vectors, keyed by column name.
     QHash<QString, QSharedPointer<std::vector<double>>> resultHash;
-    for (const QString &colName : typeValueIds)
+    QStringList colNames;
+    for (const QString &typeValueId : typeValueIds)
     {
-        // Initialize each vector
-        resultHash.insert(colName, QSharedPointer<std::vector<double>>::create());
+        colNames << colName(typeValueId);
+        resultHash.insert(colNames.last(), QSharedPointer<std::vector<double>>::create());
     }
 
     // Construct the column list for the SELECT statement
     // We also select "dateTime" in case you need it for debugging or further usage.
     QStringList columnsToSelect;
     columnsToSelect << "dateTime"; // Not strictly necessary if you only need numeric data
-    for (const QString &colName : typeValueIds)
+    for (const QString &colName : colNames)
     {
         // Quote the column name in case it has special characters or spaces
         columnsToSelect << QString("\"%1\"").arg(colName);
@@ -261,7 +310,7 @@ VariableAbstract::readData(
         // For each column in typeValueIds, read the corresponding field.
         for (int i = 0; i < typeValueIds.size(); ++i)
         {
-            const QString &colName = typeValueIds.at(i);
+            const QString &colName = colNames.at(i);
             double val = selectQuery.value(i + 1).toDouble(); // +1 because index 0 is dateTime
             resultHash[colName]->push_back(val);
         }
@@ -302,8 +351,7 @@ void VariableAbstract::recordInDatabase(
         return;
     }
 
-    // 3. Check if the column for `tick.name()` exists. If not, add it.
-    //    We store the value as a REAL in the database.
+    const QString &colName = name() + typeValueId;
     QSqlRecord tableRecord = db.record(tableName);
     if (tableRecord.indexOf(typeValueId) == -1)
     {
@@ -383,15 +431,18 @@ void VariableAbstract::recordInDatabase(
     }
 
     // 3. Ensure columns exist for each typeValueId
+    QStringList colNames;
     QSqlRecord tableRecord = db.record(tableName);
     for (const QString &typeValueId : typeValueIds)
     {
+        const auto &colName = this->colName(typeValueId);
+        colNames << colName;
         if (tableRecord.indexOf(typeValueId) == -1)
         {
             QString alterTableQueryStr = QString(
                 "ALTER TABLE %1 "
                 "ADD COLUMN \"%2\" REAL"
-            ).arg(tableName, typeValueId);
+            ).arg(tableName, colName);
 
             QSqlQuery alterTableQuery(db);
             if (!alterTableQuery.exec(alterTableQueryStr))
@@ -411,10 +462,10 @@ void VariableAbstract::recordInDatabase(
     // Construct query dynamically based on typeValueIds
     QStringList columnNames;
     QStringList valuePlaceholders;
-    for (const QString &typeValueId : typeValueIds)
+    for (const QString &colName : colNames)
     {
-        columnNames << QString("\"%1\"").arg(typeValueId);  // Protect against SQL injection
-        valuePlaceholders << QString(":%1").arg(typeValueId);
+        columnNames << QString("\"%1\"").arg(colName);  // Protect against SQL injection
+        valuePlaceholders << QString(":%1").arg(colName);
     }
 
     QString insertQueryStr = QString(
@@ -435,9 +486,9 @@ void VariableAbstract::recordInDatabase(
 
     // Bind values to the query
     insertQuery.bindValue(":dateTime", dateTime.toString(Qt::ISODate));
-    for (int i = 0; i < typeValueIds.size(); ++i)
+    for (int i = 0; i < colNames.size(); ++i)
     {
-        insertQuery.bindValue(":" + typeValueIds[i], values[i]);
+        insertQuery.bindValue(":" + colNames[i], values[i]);
     }
 
     // Execute the query
@@ -451,7 +502,7 @@ void VariableAbstract::recordInDatabase(
 
 QSqlDatabase VariableAbstract::getDatabaseOpened(const QString &tickId) const
 {
-    const QString &connectionName = name();
+    const QString &connectionName = nameDataBase() + "_" + tickId;
     if (!QSqlDatabase::contains(connectionName))
     {
         if (DB_FOLDER_PATH.isEmpty())
@@ -481,7 +532,8 @@ QSqlDatabase VariableAbstract::getDatabaseOpened(const QString &tickId) const
     return QSqlDatabase::database(connectionName);
 }
 
-VariableAbstract::Recorder::Recorder(const VariableAbstract *variable)
+QString VariableAbstract::colName(const QString &typeValueId) const
 {
-    ALL_VARIABLES << variable;
+    return typeValueId;
 }
+
