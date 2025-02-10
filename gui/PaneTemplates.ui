@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Templates</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <item>
@@ -85,7 +85,7 @@
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayoutTradPairs">
        <item>
         <widget class="QLabel" name="label">
@@ -95,7 +95,21 @@
         </widget>
        </item>
        <item>
-        <widget class="QTableView" name="tableViewPairs"/>
+        <widget class="QLineEdit" name="lineEditFilterPairs">
+         <property name="placeholderText">
+          <string>Filter</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTableView" name="tableViewPairs">
+         <property name="selectionMode">
+          <enum>QAbstractItemView::NoSelection</enum>
+         </property>
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>true</bool>
+         </attribute>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -103,7 +117,7 @@
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
          <widget class="QLabel" name="label_2">
@@ -117,7 +131,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
          <widget class="QLabel" name="label_3">
@@ -127,11 +141,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QListView" name="listViewParams_2"/>
+         <widget class="QListView" name="listViewValueTypes"/>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QLabel" name="label_6">
@@ -141,7 +155,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QListView" name="listViewParams_5"/>
+         <widget class="QListView" name="listViewExternalIndicators"/>
         </item>
        </layout>
       </widget>
@@ -150,7 +164,7 @@
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_6">
         <item>
          <widget class="QLabel" name="label_4">
@@ -160,11 +174,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QListView" name="listViewParams_3"/>
+         <widget class="QListView" name="listViewPairTransformations"/>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_5">
         <item>
          <widget class="QLabel" name="label_5">
@@ -174,7 +188,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QListView" name="listViewParams_4"/>
+         <widget class="QListView" name="listViewIndicators"/>
         </item>
        </layout>
       </widget>

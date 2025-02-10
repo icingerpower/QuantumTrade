@@ -2,11 +2,14 @@
 
 #include "../common/workingdirectory/WorkingDirectoryManager.h"
 #include "../common/workingdirectory/DialogOpenConfig.h"
+#include "../common/types/types.h"
 
 #include "gui/MainWindow.h"
 
 int main(int argc, char *argv[])
 {
+    qRegisterMetaType<QList<QStringList>>();
+    qRegisterMetaType<QHash<QString, QSet<QString>>>();
     QApplication a(argc, argv);
     WorkingDirectoryManager::instance()->installDarkOrangePalette();
     DialogOpenConfig dialog;

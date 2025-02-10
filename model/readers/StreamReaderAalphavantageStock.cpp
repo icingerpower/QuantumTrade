@@ -13,10 +13,19 @@
 
 #include "StreamReaderAalphavantageStock.h"
 
+RECORD_STREAMER(StreamReaderAalphavantageStock)
+
 StreamReaderAalphavantageStock::StreamReaderAalphavantageStock()
     : StreamReaderAbstract()
 {
 
+}
+
+SortedMap<QString, StreamReaderAalphavantageStock::Param> StreamReaderAalphavantageStock::paramsDefault() const
+{
+    SortedMap<QString, Param> params;
+    params[PARAM_API_KEY] = PARAM_API_KEY_NAME_VALUE;
+    return params;
 }
 
 const QHash<QString, QString> StreamReaderAalphavantageStock::HASH_TICK{
@@ -35,10 +44,10 @@ const QHash<QString, QString> StreamReaderAalphavantageStock::HASH_VALUE_TYPES{
     , {VariableAbstract::TYPE_VALUE_VOLUME.id, "5. volume"}
 };
 
-QMultiHash<QString, StreamReaderAbstract::VariableAvailability>
+QMultiHash<QString, VariableAvailability>
 StreamReaderAalphavantageStock::availableVariables() const
 {
-    QMultiHash<QString, StreamReaderAbstract::VariableAvailability> availableVars;
+    QMultiHash<QString, VariableAvailability> availableVars;
     QStringList stockSymbols{"AAPL","MSFT","AMZN","GOOGL","GOOG","TSLA"
                              ,"BRK.B","NVDA","META","UNH","JNJ","V","WMT"
                              ,"XOM","JPM","PG","MA","HD","CVX","LLY","PFE"
@@ -95,13 +104,12 @@ StreamReaderAalphavantageStock::availableVariables() const
                              ,"SKC.NZ","SKL.NZ","VCT.NZ"};
     for (const auto &symbol : stockSymbols)
     {
-        StreamReaderAbstract::VariableAvailability variableAvailable;
-        variableAvailable.tickIds = {Tick::TICK_MIN_1.id()
+        VariableAvailability variableAvailable;
+        variableAvailable.tickIdsHistory = {Tick::TICK_MIN_1.id()
                                      , Tick::TICK_MIN_5.id()
                                      , Tick::TICK_MIN_15.id()
                                      , Tick::TICK_MIN_30.id()
                                      , Tick::TICK_HOUR_1.id()};
-        variableAvailable.historicalData = true;
         variableAvailable.variable = new Stock{symbol, "USD"};
         availableVars.insert(variableAvailable.variable->name(), variableAvailable);
     }
@@ -122,7 +130,7 @@ StreamReaderAalphavantageStock::availableVariables() const
                               ,"NEXO","ZRX"};
     for (const auto &symbol : cryptoSymbols)
     {
-        StreamReaderAbstract::VariableAvailability variableAvailable;
+        VariableAvailability variableAvailable;
         variableAvailable.tickIds = {Tick::TICK_MIN_1.id()
                                      , Tick::TICK_MIN_5.id()
                                      , Tick::TICK_MIN_15.id()
@@ -142,14 +150,17 @@ StreamReaderAalphavantageStock::availableVariables() const
 }
 
 QSharedPointer<Job> StreamReaderAalphavantageStock::readLatestData(
-    const Tick &tick, QList<VariableAbstract *> variables, QSharedPointer<Job> job)
+        const SortedMap<QString, QVariant> &params,
+        const Tick &tick,
+        QList<VariableAbstract *> variables,
+        QSharedPointer<Job> job)
 {
     _clearFinishedFutures();
     job->start();
+    QString apiKey = params[PARAM_API_KEY].toString();
     QSharedPointer<std::future<void>> future(new std::future<void>);
-    *future = std::move(std::async(std::launch::async, [this, tick, variables, job]() {
+    *future = std::move(std::async(std::launch::async, [this, tick, variables, job, apiKey]() {
         QNetworkAccessManager manager;
-        QString apiKey = "your_api_key_here"; // Replace with your actual API key
 
         while (job->isRunning())
         {
@@ -222,11 +233,194 @@ QSharedPointer<Job> StreamReaderAalphavantageStock::readLatestData(
 }
 
 void StreamReaderAalphavantageStock::readHistoricalData(
-    const Tick &tick,
-    VariableAbstract *variable,
-    const QDate &dateFrom,
-    const QDate &dateTo)
+        const SortedMap<QString, QVariant> &params,
+        const Tick &tick,
+        VariableAbstract *variable,
+        const QDate &dateFrom,
+        const QDate &dateTo)
 {
+    _clearFinishedFutures();
+
+    QString apiKey = params[PARAM_API_KEY].toString();
+    auto stock = static_cast<Stock *>(variable);
+
+    // Launch the asynchronous task
+    QSharedPointer<std::future<void>> future(new std::future<void>);
+    *future = std::move(std::async(std::launch::async, [this, tick, stock, dateFrom, dateTo, apiKey]() {
+        QNetworkAccessManager manager;
+
+        // Generate the list of months to fetch data for
+        QList<QDate> months = generateMonths(dateFrom, dateTo);
+
+        for (const QDate &month : months)
+        {
+            // Format the month parameter (YYYY-MM)
+            QString monthParam = month.toString("yyyy-MM");
+
+            // Construct the API URL with required and optional parameters
+            QString interval = HASH_TICK[tick.id()];
+            QString url = QString("https://www.alphavantage.co/query?"
+                                  "function=TIME_SERIES_INTRADAY&"
+                                  "symbol=%1&"
+                                  "interval=%2&"
+                                  "outputsize=full&"
+                                  "apikey=%3")
+                          .arg(stock->symbol(), interval, apiKey);
+            url += "&adjusted=true&extended_hours=true";
+
+            // --- Retry loop: If we hit a rate-limit (detected via "Note"), sleep 10 seconds and try again ---
+            bool querySuccessful = false;
+            int retryCount = 0;
+            QJsonObject jsonObject;
+            while (!querySuccessful && retryCount < 100) // you can adjust the maximum retries if desired
+            {
+                if (!QThread::currentThread()->isInterruptionRequested())
+                {
+                    // Create a new event loop for this attempt
+                    QEventLoop loop;
+                    QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
+
+                    // Send the GET request
+                    QNetworkReply *reply = manager.get(QNetworkRequest(QUrl(url)));
+
+                    // Wait for the network response
+                    loop.exec();
+
+                    // Handle network errors
+                    if (reply->error() != QNetworkReply::NoError)
+                    {
+                        qWarning() << "Network error while fetching data for symbol"
+                                   << stock->symbol()
+                                   << "and month"
+                                   << monthParam
+                                   << ":"
+                                   << reply->errorString();
+                        reply->deleteLater();
+                        QThread::sleep(60); // longer sleep for network errors
+                        ++retryCount;
+                        continue;
+                    }
+
+                    // Read and parse the response data
+                    QByteArray responseData = reply->readAll();
+                    reply->deleteLater();
+
+                    QJsonDocument jsonResponse = QJsonDocument::fromJson(responseData);
+                    if (jsonResponse.isNull() || !jsonResponse.isObject())
+                    {
+                        qWarning() << "Invalid JSON response for symbol"
+                                   << stock->symbol()
+                                   << "and month"
+                                   << monthParam;
+                        QThread::sleep(60);
+                        ++retryCount;
+                        continue;
+                    }
+
+                    jsonObject = jsonResponse.object();
+
+                    // Check for API errors (other than rate limiting)
+                    if (jsonObject.contains("Error Message"))
+                    {
+                        qWarning() << "API Error for symbol"
+                                   << stock->symbol()
+                                   << "and month"
+                                   << monthParam
+                                   << ":"
+                                   << jsonObject["Error Message"].toString();
+                        QThread::sleep(60);
+                        ++retryCount;
+                        break; // break out of retry loop on API errors that are not rate-limit
+                    }
+
+                    // Check if the API is returning a note (e.g. rate limit reached)
+                    if (jsonObject.contains("Note"))
+                    {
+                        qWarning() << "API Note (rate limit reached) for symbol"
+                                   << stock->symbol()
+                                   << "and month"
+                                   << monthParam
+                                   << ":"
+                                   << jsonObject["Note"].toString();
+                        QThread::sleep(10); // sleep 10 seconds before retrying
+                        ++retryCount;
+                        continue;
+                    }
+
+                    // If we reached here, the query appears successful
+                    querySuccessful = true;
+                }
+                else
+                {
+                    // If the thread has been interrupted, exit the retry loop.
+                    break;
+                }
+            } // End retry loop
+
+            // If the query was not successful after retries, move on to the next month
+            if (!querySuccessful)
+            {
+                continue;
+            }
+
+            // --- Process the successful response ---
+            QString timeSeriesKey = QString("Time Series (%1)").arg(interval);
+            if (!jsonObject.contains(timeSeriesKey))
+            {
+                qWarning() << "Time series data not found for symbol"
+                           << stock->symbol()
+                           << "and month"
+                           << monthParam;
+                QThread::sleep(60);
+                continue;
+            }
+
+            QJsonObject timeSeries = jsonObject[timeSeriesKey].toObject();
+
+            // Iterate over each data point in the time series
+            for (auto it = timeSeries.begin(); it != timeSeries.end(); ++it)
+            {
+                QString dateTimeStr = it.key();
+                QDateTime dateTime = QDateTime::fromString(dateTimeStr, "yyyy-MM-dd HH:mm:ss");
+                dateTime.setTimeSpec(Qt::UTC); // Adjust time spec if necessary
+
+                QDate date = dateTime.date();
+
+                // Filter data points within the specified date range
+                if (date < dateFrom || date > dateTo)
+                {
+                    continue; // Skip data points outside the date range
+                }
+
+                QJsonObject ohlcv = it.value().toObject();
+
+                // Extract OHLCV values using HASH_VALUE_TYPES
+                QStringList valueTypeIds;
+                QList<double> stockValues;
+                for (auto hashIt = HASH_VALUE_TYPES.begin(); hashIt != HASH_VALUE_TYPES.end(); ++hashIt)
+                {
+                    valueTypeIds << hashIt.key();
+                    stockValues << ohlcv[hashIt.value()].toString().toDouble();
+                }
+
+                // Insert each OHLCV value into the database
+                for (int i = 0; i < valueTypeIds.size(); ++i)
+                {
+                    QString typeValueId = valueTypeIds.at(i);
+                    double value = stockValues.at(i);
+                    stock->recordInDatabase(dateTime, tick, typeValueId, value);
+                }
+            }
+
+            // Respect API rate limits by introducing a delay between monthly queries
+            QThread::sleep(15); // Sleep for 15 seconds between API calls
+        }
+
+        qDebug() << "Completed fetching historical data for symbol" << stock->symbol();
+    }));
+
+    // Store the future to manage its lifecycle
+    m_futures << future;
 }
 
 QList<QDate> StreamReaderAalphavantageStock::generateMonths(
@@ -244,12 +438,13 @@ QList<QDate> StreamReaderAalphavantageStock::generateMonths(
 }
 
 void StreamReaderAalphavantageStock::readHistoricalData(
-    const Tick &tick,
-    QList<VariableAbstract *> variables,
-    const QDate &dateFrom,
-    const QDate &dateTo)
+        const SortedMap<QString, QVariant> &params,
+        const Tick &tick,
+        QList<VariableAbstract *> variables,
+        const QDate &dateFrom,
+        const QDate &dateTo)
 {
-
+    // We do nothing because retreiving data in bulk is not available
 }
 
 void StreamReaderAalphavantageStock::_clearFinishedFutures()

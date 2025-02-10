@@ -41,6 +41,8 @@ set(PROJECT_SOURCES
         gui/PaneData.h
         gui/PaneData.cpp
         gui/PaneData.ui
+        "../common/types/types.h"
+        "../common/types/types.cpp"
         ${MODEL_FILES}
         ${WORKING_DIR_FILES}
 )

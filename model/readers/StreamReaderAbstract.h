@@ -5,21 +5,27 @@
 #include <QString>
 #include <QList>
 
+#include "../common/utils/SortedMap.h"
+
 #include "model/pairs/Tick.h"
 #include "Job.h"
+#include "VariableAvailablility.h"
 
 class VariableAbstract;
 
 class StreamReaderAbstract
 {
 public:
-    StreamReaderAbstract();
-    static const QList<const StreamReaderAbstract *> & allStreamReaders();
-    struct VariableAvailability{
-        VariableAbstract *variable;
-        QList<QString> tickIds;
-        bool historicalData;
+    struct Param{
+        QString name;
+        QVariant Value;
     };
+    static const QString PARAM_API_KEY;
+    static const Param PARAM_API_KEY_NAME_VALUE;
+    StreamReaderAbstract();
+    static QStringList allSymbols();
+    static QMap<QString, VariableAvailability> allAvailableVariables();
+    static const QList<const StreamReaderAbstract *> & allStreamReaders();
 
     QMultiHash<QString, VariableAvailability> availableVariables(const Tick &tick) const;
     //*
@@ -31,21 +37,26 @@ public:
         bool withoutHistoryOnly = false,
         QSharedPointer<Job> job = QSharedPointer<Job>{new Job});
 
+    virtual SortedMap<QString, Param> paramsDefault() const = 0;
+
     virtual QMultiHash<QString, VariableAvailability> availableVariables() const = 0;
     virtual QSharedPointer<Job> readLatestData(
-        const Tick &tick,
-        QList<VariableAbstract *> variables,
-        QSharedPointer<Job> job = QSharedPointer<Job>{new Job}) = 0;
+            const SortedMap<QString, QVariant> &params,
+            const Tick &tick,
+            QList<VariableAbstract *> variables,
+            QSharedPointer<Job> job = QSharedPointer<Job>{new Job}) = 0;
     virtual void readHistoricalData(
-        const Tick &tick,
-        VariableAbstract *variable,
-        const QDate &dateFrom,
-        const QDate &dateTo) = 0;
+            const SortedMap<QString, QVariant> &params,
+            const Tick &tick,
+            VariableAbstract *variable,
+            const QDate &dateFrom,
+            const QDate &dateTo) = 0;
     virtual void readHistoricalData(
-        const Tick &tick,
-        QList<VariableAbstract *> variables,
-        const QDate &dateFrom,
-        const QDate &dateTo) = 0;
+            const SortedMap<QString, QVariant> &params,
+            const Tick &tick,
+            QList<VariableAbstract *> variables,
+            const QDate &dateFrom,
+            const QDate &dateTo) = 0;
 
 
     class Recorder{
@@ -56,5 +67,10 @@ public:
 private:
     static QList<const StreamReaderAbstract *> ALL_STREAM_READERS;
 };
+
+#define RECORD_STREAMER(STREAMER_CLASS) \
+STREAMER_CLASS instance##STREAMER_CLASS; \
+    STREAMER_CLASS::Recorder recorder##STREAMER_CLASS{&instance##STREAMER_CLASS};
+
 
 #endif // STREAMREADERABSTRACT_H
