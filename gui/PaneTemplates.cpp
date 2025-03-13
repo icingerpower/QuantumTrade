@@ -3,6 +3,7 @@
 
 #include "model/TemplateManager.h"
 #include "model/TradingPairs.h"
+#include "model/TemplateParams.h"
 
 #include "PaneTemplates.h"
 #include "ui_PaneTemplates.h"
@@ -14,6 +15,8 @@ PaneTemplates::PaneTemplates(QWidget *parent) :
     ui->setupUi(this);
     ui->listViewTemplates->setModel(TemplateManager::instance());
     _connectSlots();
+    ui->listViewTemplates->setCurrentIndex(
+        TemplateManager::instance()->index(0, 0));
 }
 
 void PaneTemplates::_connectSlots()
@@ -94,10 +97,14 @@ void PaneTemplates::onTemplateSelected(
         {
             auto firstIndex = selected.indexes().first();
             const auto &templateId = TemplateManager::instance()->getId(firstIndex);
+
             auto tradingPairsModel = new TradingPairs{templateId, ui->tableViewPairs};
             ui->tableViewPairs->setModel(tradingPairsModel);
             QHeaderView* header = ui->tableViewPairs->horizontalHeader();
             header->setSectionsClickable(true);
+
+            auto templateParams = new TemplateParams{templateId, ui->tableViewParams};
+            ui->tableViewParams->setModel(templateParams);
         }
     }
 }

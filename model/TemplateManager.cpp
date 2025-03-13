@@ -91,6 +91,6 @@ void TemplateManager::_saveInSettings()
 void TemplateManager::_loadFromSettings()
 {
     auto settings = WorkingDirectoryManager::instance()->settingsLocalIfClient();
-    m_listOfStringList << settings->value(
+    m_listOfStringList = settings->value(
                               KEY_TEMPLATE_MANAGER).value<QList<QStringList>>();
 }

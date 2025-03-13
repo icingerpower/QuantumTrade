@@ -10,6 +10,8 @@ int main(int argc, char *argv[])
 {
     qRegisterMetaType<QList<QStringList>>();
     qRegisterMetaType<QHash<QString, QSet<QString>>>();
+    qRegisterMetaType<QHash<QString, QVariant>>();
+
     QApplication a(argc, argv);
     WorkingDirectoryManager::instance()->installDarkOrangePalette();
     DialogOpenConfig dialog;
