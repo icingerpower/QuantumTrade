@@ -28,6 +28,7 @@ private:
     static const QString SETTINGS_KEY_BASE;
     static const QString PARAM_DAYS_DATA;
     static const QString PARAM_DAYS_LIFESPAN;
+    static const QString PARAM_TICK;
     struct ParamInfo{
         QString id;
         QString name;

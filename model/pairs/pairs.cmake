@@ -13,5 +13,7 @@ set(PAIRS_FILES
         ${CMAKE_CURRENT_LIST_DIR}/Tick.cpp
         ${CMAKE_CURRENT_LIST_DIR}/ExceptionVariableDb.h
         ${CMAKE_CURRENT_LIST_DIR}/ExceptionVariableDb.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/TickDelegate.h
+        ${CMAKE_CURRENT_LIST_DIR}/TickDelegate.cpp
 )
 

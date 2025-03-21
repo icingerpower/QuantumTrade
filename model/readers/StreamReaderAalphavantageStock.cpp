@@ -5,6 +5,8 @@
 #include <QJsonArray>
 #include <QEventLoop>
 #include <QThread>
+#include <QTimeZone>
+
 #include <future>
 
 #include "model/pairs/Stock.h"
@@ -382,7 +384,7 @@ void StreamReaderAalphavantageStock::readHistoricalData(
             {
                 QString dateTimeStr = it.key();
                 QDateTime dateTime = QDateTime::fromString(dateTimeStr, "yyyy-MM-dd HH:mm:ss");
-                dateTime.setTimeSpec(Qt::UTC); // Adjust time spec if necessary
+                dateTime.setTimeZone(QTimeZone::utc());
 
                 QDate date = dateTime.date();
 

@@ -4,6 +4,7 @@
 #include "model/TemplateManager.h"
 #include "model/TradingPairs.h"
 #include "model/TemplateParams.h"
+#include "model/pairs/TickDelegate.h"
 
 #include "PaneTemplates.h"
 #include "ui_PaneTemplates.h"
@@ -17,6 +18,8 @@ PaneTemplates::PaneTemplates(QWidget *parent) :
     _connectSlots();
     ui->listViewTemplates->setCurrentIndex(
         TemplateManager::instance()->index(0, 0));
+    ui->tableViewParams->setItemDelegate(
+        new TickDelegate{ui->listViewTemplates});
 }
 
 void PaneTemplates::_connectSlots()

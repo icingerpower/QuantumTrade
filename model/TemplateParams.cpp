@@ -1,11 +1,14 @@
 #include "../common/workingdirectory/WorkingDirectoryManager.h"
 
+#include "model/pairs/Tick.h"
+
 #include "TemplateParams.h"
 
 const QString TemplateParams::SETTINGS_KEY_BASE{"TemplateParams_"};
 
 const QString TemplateParams::PARAM_DAYS_DATA{"daysTraining"};
 const QString TemplateParams::PARAM_DAYS_LIFESPAN{"daysLifespan"};
+const QString TemplateParams::PARAM_TICK{"tick"};
 
 TemplateParams::TemplateParams(const QString &templateId, QObject *parent)
     : QAbstractTableModel(parent)
@@ -33,6 +36,12 @@ void TemplateParams::_initParams()
         tr("Days lifespan"),
         tr("Number of days as lifespan before a new model needs to be regenerated"),
         10
+    };
+    m_params << ParamInfo{
+        PARAM_TICK,
+            tr("Tick"),
+            tr("Tick used by the model"),
+            QVariant::fromValue(&Tick::TICK_DAY_1)
     };
     for (int i=0; i<m_params.size(); ++i)
     {

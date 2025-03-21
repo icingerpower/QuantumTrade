@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QTime>
+#include <QComboBox>
 
 class Tick
 {
@@ -28,5 +29,22 @@ private:
     QString m_name;
     int m_seconds;
 };
+
+class TickComboBox : public QComboBox
+{
+    Q_OBJECT
+public:
+    explicit TickComboBox(QWidget *parent = nullptr) : QComboBox(parent)
+    {
+        for (const Tick* tick : Tick::TICKS)
+        {
+            addItem(tick->name(), QVariant::fromValue(tick));
+        }
+    }
+};
+
+
+QDataStream & operator << (QDataStream &stream, const Tick *tick);
+QDataStream & operator >> (QDataStream &stream, const Tick *&tick);
 
 #endif // TICK_H

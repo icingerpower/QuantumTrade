@@ -136,20 +136,6 @@
        </layout>
       </widget>
       <widget class="QWidget" name="layoutWidget">
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
-         <widget class="QLabel" name="label_3">
-          <property name="text">
-           <string>Value types</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QListView" name="listViewValueTypes"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QLabel" name="label_6">

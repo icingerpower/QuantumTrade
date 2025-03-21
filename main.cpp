@@ -3,6 +3,7 @@
 #include "../common/workingdirectory/WorkingDirectoryManager.h"
 #include "../common/workingdirectory/DialogOpenConfig.h"
 #include "../common/types/types.h"
+//#include "model/pairs/Tick.h"
 
 #include "gui/MainWindow.h"
 

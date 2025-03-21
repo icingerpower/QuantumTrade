@@ -1,3 +1,6 @@
+#include <QItemEditorFactory>
+#include <QStandardItemEditorCreator>
+
 #include "Tick.h"
 
 const Tick Tick::TICK_MIN_1{"1min", QObject::tr("1 minute"), 15*60};
@@ -24,8 +27,26 @@ const QHash<QString, const Tick *> Tick::TICKS_BY_ID = []() -> QHash<QString, co
     return _TICKS_BY_ID;
 }();
 
+QDataStream & operator << (QDataStream &stream, const Tick *tick)
+{
+    stream << tick->id();
+    return stream;
+}
+
+QDataStream & operator >> (QDataStream &stream, const Tick *&tick)
+{
+    QString id;
+    stream >> id;
+    tick = Tick::TICKS_BY_ID[id];
+    return stream;
+}
+
 Tick::Tick(const QString &id, const QString &name, const int &seconds)
 {
+    static bool registred = []() -> bool {
+        qRegisterMetaType<const Tick *>();
+        return true;
+    }();
     m_id = id;
     m_name = name;
     m_seconds = seconds;
@@ -45,3 +66,4 @@ int Tick::seconds() const
 {
     return m_seconds;
 }
+
