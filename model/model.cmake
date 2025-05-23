@@ -1,5 +1,7 @@
 include(${CMAKE_CURRENT_LIST_DIR}/pairs/pairs.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/readers/readers.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/functions/functions.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/indicators/indicators.cmake)
 
 set(MODEL_FILES
         ${CMAKE_CURRENT_LIST_DIR}/TradingPairs.h
@@ -10,4 +12,6 @@ set(MODEL_FILES
         ${CMAKE_CURRENT_LIST_DIR}/TemplateParams.cpp
         ${PAIRS_FILES}
         ${READERS_FILES}
+        ${FUNCTION_FILES}
+        ${INDICATOR_FILES}
     )
