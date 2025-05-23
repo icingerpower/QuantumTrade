@@ -4,12 +4,12 @@ RECORD_INDICATOR(IndicatorVariancePositive);
 
 QString IndicatorVariancePositive::name() const
 {
-    return "VariancePositive";
+    return QObject::tr("Pos var");
 }
 
 QString IndicatorVariancePositive::description() const
 {
-    return "VariancePositive";
+    return QObject::tr("Positive variance");
 }
 
 double IndicatorVariancePositive::compute(

@@ -4,12 +4,12 @@ RECORD_INDICATOR(IndicatorVarianceNegative);
 
 QString IndicatorVarianceNegative::name() const
 {
-    return "VarianceNegative";
+    return QObject::tr("Neg var");
 }
 
 QString IndicatorVarianceNegative::description() const
 {
-    return "VarianceNegative";
+    return QObject::tr("Negative variance");
 }
 
 double IndicatorVarianceNegative::compute(

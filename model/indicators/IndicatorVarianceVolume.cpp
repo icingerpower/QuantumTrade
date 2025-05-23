@@ -4,12 +4,12 @@ RECORD_INDICATOR(IndicatorVarianceVolume);
 
 QString IndicatorVarianceVolume::name() const
 {
-    return "VarianceVolume";
+    return QObject::tr("Volume var");
 }
 
 QString IndicatorVarianceVolume::description() const
 {
-    return "VarianceVolume";
+    return QObject::tr("Variance of the volume");
 }
 
 double IndicatorVarianceVolume::compute(

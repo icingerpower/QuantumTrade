@@ -4,12 +4,12 @@ RECORD_INDICATOR(IndicatorVariance);
 
 QString IndicatorVariance::name() const
 {
-    return "Variance";
+    return QObject::tr("Var");
 }
 
 QString IndicatorVariance::description() const
 {
-    return "Variance";
+    return QObject::tr("Variance");
 }
 
 double IndicatorVariance::compute(

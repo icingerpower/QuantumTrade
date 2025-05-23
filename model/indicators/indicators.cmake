@@ -9,5 +9,21 @@ set(INDICATOR_FILES
         ${CMAKE_CURRENT_LIST_DIR}/IndicatorVariancePositive.cpp
         ${CMAKE_CURRENT_LIST_DIR}/IndicatorVarianceNegative.h
         ${CMAKE_CURRENT_LIST_DIR}/IndicatorVarianceNegative.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorMACD.h
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorMACD.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorRSI.h
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorRSI.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorBBW.h
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorBBW.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorATR.h
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorATR.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorOBV.h
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorOBV.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorADX.h
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorADX.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorStoch.h
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorStoch.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorVWAPDev.h
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorVWAPDev.cpp
 )
 
