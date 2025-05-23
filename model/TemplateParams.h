@@ -29,6 +29,7 @@ private:
     static const QString PARAM_DAYS_DATA;
     static const QString PARAM_DAYS_LIFESPAN;
     static const QString PARAM_TICK;
+    static const QString PARAM_TICK_GAP_PREDICTION;
     struct ParamInfo{
         QString id;
         QString name;

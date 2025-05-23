@@ -9,6 +9,7 @@ const QString TemplateParams::SETTINGS_KEY_BASE{"TemplateParams_"};
 const QString TemplateParams::PARAM_DAYS_DATA{"daysTraining"};
 const QString TemplateParams::PARAM_DAYS_LIFESPAN{"daysLifespan"};
 const QString TemplateParams::PARAM_TICK{"tick"};
+const QString TemplateParams::PARAM_TICK_GAP_PREDICTION{"tickGapPrediction"};
 
 TemplateParams::TemplateParams(const QString &templateId, QObject *parent)
     : QAbstractTableModel(parent)
@@ -42,6 +43,12 @@ void TemplateParams::_initParams()
             tr("Tick"),
             tr("Tick used by the model"),
             QVariant::fromValue(&Tick::TICK_DAY_1)
+    };
+    m_params << ParamInfo{
+        PARAM_TICK_GAP_PREDICTION,
+            tr("Tick gap"),
+            tr("Tick gap difference used by the model"),
+            1
     };
     for (int i=0; i<m_params.size(); ++i)
     {
