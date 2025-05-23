@@ -2,19 +2,19 @@
 
 #include "FunctionExp.h"
 
-RECORD_FUNCTION(FunctionExp);
+//RECORD_FUNCTION(FunctionExp); We won't use it for now
 
 QString FunctionExp::name() const
 {
-    return "Exp";
+    return QObject::tr("Exp");
 }
 
 QString FunctionExp::description() const
 {
-    return "return the exponential log";
+    return QObject::tr("return the exponential log");
 }
 
-double FunctionExp::transform(double value)
+double FunctionExp::transform(double value, double)
 {
     return qExp(value);
 }

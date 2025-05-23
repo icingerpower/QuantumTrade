@@ -1,9 +1,9 @@
-#ifndef FUNCTIONLOG_H
-#define FUNCTIONLOG_H
+#ifndef FUNCTIONPERCENTAGE_H
+#define FUNCTIONPERCENTAGE_H
 
 #include "FunctionAbstract.h"
 
-class FunctionLog : public FunctionAbstract
+class FunctionPercentage : public FunctionAbstract
 {
 public:
     QString name() const override;
@@ -11,4 +11,4 @@ public:
     double transform(double value, double valuePrevious) override;
 };
 
-#endif // FUNCTIONLOG_H
+#endif // FUNCTIONPERCENTAGE_H

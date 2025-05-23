@@ -14,7 +14,7 @@ class FunctionAbstract
 public:
     virtual QString name() const = 0;
     virtual QString description() const = 0;
-    virtual double transform(double value) = 0;
+    virtual double transform(double value, double valuePrevious) = 0;
     class Recorder{
     public:
         Recorder(const FunctionAbstract *streamReader);

@@ -6,15 +6,15 @@ RECORD_FUNCTION(FunctionLog);
 
 QString FunctionLog::name() const
 {
-    return "Log";
+    return QObject::tr("Log");
 }
 
 QString FunctionLog::description() const
 {
-    return "return the exponential log";
+    return QObject::tr("return the exponential log");
 }
 
-double FunctionLog::transform(double value)
+double FunctionLog::transform(double value, double)
 {
     return qLn(value);
 }

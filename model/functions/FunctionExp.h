@@ -8,7 +8,7 @@ class FunctionExp : public FunctionAbstract
 public:
     QString name() const override;
     QString description() const override;
-    double transform(double value) override;
+    double transform(double value, double valuePrevious) override;
 };
 
 #endif // FUNCTIONLOG_H

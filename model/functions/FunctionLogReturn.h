@@ -1,9 +1,9 @@
-#ifndef FUNCTIONLOG_H
-#define FUNCTIONLOG_H
+#ifndef FUNCTIONLOGRETURN_H
+#define FUNCTIONLOGRETURN_H
 
 #include "FunctionAbstract.h"
 
-class FunctionLog : public FunctionAbstract
+class FunctionLogReturn : public FunctionAbstract
 {
 public:
     QString name() const override;
@@ -11,4 +11,4 @@ public:
     double transform(double value, double valuePrevious) override;
 };
 
-#endif // FUNCTIONLOG_H
+#endif // FUNCTIONLOGRETURN_H

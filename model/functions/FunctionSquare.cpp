@@ -6,15 +6,15 @@ RECORD_FUNCTION(FunctionSquare);
 
 QString FunctionSquare::name() const
 {
-    return "Square";
+    return QObject::tr("Square");
 }
 
 QString FunctionSquare::description() const
 {
-    return "return the exponential log";
+    return QObject::tr("return the exponential log");
 }
 
-double FunctionSquare::transform(double value)
+double FunctionSquare::transform(double value, double)
 {
     return qLn(value);
 }
