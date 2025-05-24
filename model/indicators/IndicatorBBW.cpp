@@ -13,6 +13,11 @@ QPair<QString, QString> IndicatorBBW::PAR_ID_NAME_STDDEV_MULTIPLIER{
     QObject::tr("Std-Dev Multiplier")
 };
 
+QString IndicatorBBW::id() const
+{
+    return "IndicatorBBW";
+}
+
 QString IndicatorBBW::name() const
 {
     return QObject::tr("Bollinger Band Width");
@@ -25,41 +30,40 @@ QString IndicatorBBW::description() const
 
 double IndicatorBBW::compute(
     std::deque<std::vector<double>>& queueOfValues,
-    int colIndexValue,
-    int, int, int,
+    int /*colIndexLow*/,
+    int /*colIndexHigh*/,
+    int /*colIndexOpen*/,
+    int colIndexClose,
+    int /*colIndexVolume*/,
     const Tick*,
     const QMap<QString, QVariant>& params) const
 {
-    // Look-back and multiplier from params
     int bufferSize = params.value(PAR_ID_SIZE_SAMPLE).toInt();
     int sizeSample = qMin(int(queueOfValues.size()), bufferSize);
     double mult    = params.value(PAR_ID_STDDEV_MULTIPLIER).toDouble();
 
-    // Need at least one bar
     if (sizeSample < 1 || mult <= 0.0)
         return std::numeric_limits<double>::quiet_NaN();
 
-    // Accumulate sum and sum of squares
-    struct Acc { double sum = 0., sum2 = 0.; } acc;
+    struct Acc { double sum = 0.0, sum2 = 0.0; } acc;
     std::for_each(
         queueOfValues.begin(),
         queueOfValues.begin() + sizeSample,
         [&](auto& row) {
-            double x = row[colIndexValue];
-            acc.sum  += x;
-            acc.sum2 += x * x;
+            double price = row[colIndexClose];
+            acc.sum  += price;
+            acc.sum2 += price * price;
         }
-        );
+    );
 
     double mean = acc.sum / sizeSample;
     if (mean == 0.0)
         return std::numeric_limits<double>::quiet_NaN();
 
-    // variance = E[x^2] - (E[x])^2
     double var = (acc.sum2 / sizeSample) - (mean * mean);
     double sd  = std::sqrt(std::max(0.0, var));
 
-    // Band width = (Upper - Lower) / Middle = (2 * mult * sd) / mean
+    // (Upper band – Lower band) / Middle band = (2 * mult * sd) / mean
     return (2.0 * mult * sd) / mean;
 }
 

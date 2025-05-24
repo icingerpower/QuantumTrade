@@ -2,6 +2,11 @@
 
 RECORD_INDICATOR(IndicatorVariance);
 
+QString IndicatorVariance::id() const
+{
+    return "IndicatorVariance";
+}
+
 QString IndicatorVariance::name() const
 {
     return QObject::tr("Var");
@@ -13,13 +18,14 @@ QString IndicatorVariance::description() const
 }
 
 double IndicatorVariance::compute(
-    std::deque<std::vector<double>> &queueOfValues,
-    int colIndexValue,
-    int,
-    int,
-    int,
-    const Tick *,
-    const QMap<QString, QVariant> &params) const
+        std::deque<std::vector<double>> &queueOfValues,
+        int,
+        int,
+        int,
+        int colIndexClose,
+        int,
+        const Tick *,
+        const QMap<QString, QVariant> &params) const
 {
     double avg = 0.;
     const int sizeSample = qMin(int(queueOfValues.size()),
@@ -29,7 +35,7 @@ double IndicatorVariance::compute(
         queueOfValues.begin(),
         queueOfValues.begin() + sizeSample,
         [&](auto& row) {
-            double x = row[colIndexValue];
+            double x = row[colIndexClose];
             acc.sum  += x;
             acc.sum2 += x * x;
         }

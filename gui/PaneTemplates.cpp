@@ -3,6 +3,8 @@
 
 #include "model/TemplateManager.h"
 #include "model/TradingPairs.h"
+#include "model/Functions.h"
+#include "model/Indicators.h"
 #include "model/TemplateParams.h"
 #include "model/pairs/TickDelegate.h"
 
@@ -105,6 +107,12 @@ void PaneTemplates::onTemplateSelected(
             ui->tableViewPairs->setModel(tradingPairsModel);
             QHeaderView* header = ui->tableViewPairs->horizontalHeader();
             header->setSectionsClickable(true);
+
+            auto functionsModel = new Functions{templateId, ui->listViewPairTransformations};
+            ui->listViewPairTransformations->setModel(functionsModel);
+
+            auto indicatorsModel = new Indicators{templateId, ui->listViewIndicators};
+            ui->listViewIndicators->setModel(indicatorsModel);
 
             auto templateParams = new TemplateParams{templateId, ui->tableViewParams};
             ui->tableViewParams->setModel(templateParams);

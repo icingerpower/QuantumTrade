@@ -4,6 +4,11 @@
 
 RECORD_FUNCTION(FunctionLog);
 
+QString FunctionLog::id() const
+{
+    return "FunctionLog";
+}
+
 QString FunctionLog::name() const
 {
     return QObject::tr("Log");

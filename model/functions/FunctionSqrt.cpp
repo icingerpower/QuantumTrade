@@ -4,6 +4,11 @@
 
 RECORD_FUNCTION(FunctionSqrt);
 
+QString FunctionSqrt::id() const
+{
+    return "FunctionSqrt";
+}
+
 QString FunctionSqrt::name() const
 {
     return QObject::tr("Sqrt");

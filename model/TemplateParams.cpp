@@ -10,6 +10,10 @@ const QString TemplateParams::PARAM_DAYS_DATA{"daysTraining"};
 const QString TemplateParams::PARAM_DAYS_LIFESPAN{"daysLifespan"};
 const QString TemplateParams::PARAM_TICK{"tick"};
 const QString TemplateParams::PARAM_TICK_GAP_PREDICTION{"tickGapPrediction"};
+const QString TemplateParams::PARAM_PCA_N_COMPONENTS{"nPcaComponents"};
+const QString TemplateParams::PARAM_N_PAIRS_INVEST{"nPairInvest"};
+const QString TemplateParams::PARAM_STOP_LOSS{"percStopLoss"};
+const QString TemplateParams::PARAM_TAKE_PROFIT{"percTakeProfit"};
 
 TemplateParams::TemplateParams(const QString &templateId, QObject *parent)
     : QAbstractTableModel(parent)
@@ -47,8 +51,32 @@ void TemplateParams::_initParams()
     m_params << ParamInfo{
         PARAM_TICK_GAP_PREDICTION,
             tr("Tick gap"),
-            tr("Tick gap difference used by the model"),
+            tr("Tick gap difference used by the model. For instance, 1 means to predict the next tick."),
             1
+    };
+    m_params << ParamInfo{
+        PARAM_PCA_N_COMPONENTS,
+            tr("N PCA components"),
+            tr("The number of the most correlated PCA compontents to use for the model."),
+            20
+    };
+    m_params << ParamInfo{
+        PARAM_N_PAIRS_INVEST,
+            tr("N Pairs invest"),
+            tr("The number of pairs to invest in for the portofolio."),
+            4
+    };
+    m_params << ParamInfo{
+        PARAM_STOP_LOSS,
+            tr("Stop loss"),
+            tr("The stop loss in percentage."),
+            1.0
+    };
+    m_params << ParamInfo{
+        PARAM_TAKE_PROFIT,
+            tr("Take profit"),
+            tr("The take profit in percentage."),
+            2.0
     };
     for (int i=0; i<m_params.size(); ++i)
     {

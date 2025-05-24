@@ -2,6 +2,11 @@
 
 RECORD_INDICATOR(IndicatorVarianceVolume);
 
+QString IndicatorVarianceVolume::id() const
+{
+    return "IndicatorVarianceVolume";
+}
+
 QString IndicatorVarianceVolume::name() const
 {
     return QObject::tr("Volume var");
@@ -13,13 +18,14 @@ QString IndicatorVarianceVolume::description() const
 }
 
 double IndicatorVarianceVolume::compute(
-    std::deque<std::vector<double>> &queueOfValues,
-    int,
-    int colIndexVolume,
-    int,
-    int,
-    const Tick *,
-    const QMap<QString, QVariant> &params) const
+        std::deque<std::vector<double>> &queueOfValues,
+        int colIndexLow,
+        int colIndexHigh,
+        int colIndexOpen,
+        int colIndexClose,
+        int colIndexVolume,
+        const Tick *,
+        const QMap<QString, QVariant> &params) const
 {
     double avg = 0.;
     const int sizeSample = qMin(int(queueOfValues.size()),

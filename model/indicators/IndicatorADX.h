@@ -7,12 +7,14 @@
 
 class IndicatorADX : public IndicatorAbstract {
 public:
+    QString id() const override;
     QString name() const override;
     QString description() const override;
     double compute(
         std::deque<std::vector<double>>& queueOfValues,
-        int colIndexHigh,
         int colIndexLow,
+        int colIndexHigh,
+        int colIndexOpen,
         int colIndexClose,
         int colIndexVolume,
         const Tick*,

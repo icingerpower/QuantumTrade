@@ -12,16 +12,19 @@ class Tick;
 class IndicatorAbstract
 {
 public:
+    static QList<const IndicatorAbstract *> &allIndicators();
     static QString PAR_ID_SIZE_SAMPLE;
     static QPair<QString, QString> PAR_ID_NAME_SIZE_SAMPLE;
+    virtual QString id() const = 0;
     virtual QString name() const = 0;
     virtual QString description() const = 0;
     virtual double compute(
         std::deque<std::vector<double>> &queueOfValues,
-        int colIndexValue,
-        int colIndexVolume,
+        int colIndexLow,
+        int colIndexHigh,
         int colIndexOpen,
         int colIndexClose,
+        int colIndexVolume,
         const Tick *tick,
         const QMap<QString, QVariant> &params) const = 0;
     virtual QList<QMap<QString, QVariant>> possibleParams() const = 0; // Allow the indicator to be run / tester with a different set of params

@@ -3,6 +3,11 @@
 
 RECORD_INDICATOR(IndicatorOBV);
 
+QString IndicatorOBV::id() const
+{
+    return "IndicatorOBV";
+}
+
 QString IndicatorOBV::name() const
 {
     return QObject::tr("On-Balance Volume");
@@ -15,10 +20,11 @@ QString IndicatorOBV::description() const
 
 double IndicatorOBV::compute(
     std::deque<std::vector<double>>& queueOfValues,
-    int,
-    int colIndexVolume,
-    int,
+    int /*colIndexLow*/,
+    int /*colIndexHigh*/,
+    int /*colIndexOpen*/,
     int colIndexClose,
+    int colIndexVolume,
     const Tick*,
     const QMap<QString, QVariant>& params) const
 {
@@ -27,9 +33,7 @@ double IndicatorOBV::compute(
                           params.value(PAR_ID_SIZE_SAMPLE).toInt());
     // Need at least two bars to compare closes
     if (sizeSample < 2)
-    {
         return std::numeric_limits<double>::quiet_NaN();
-    }
 
     double obv = 0.0;
     // Start at 1 so we can compare to the previous close

@@ -18,6 +18,11 @@ QPair<QString, QString> IndicatorStoch::PAR_ID_NAME_D_PERIOD{
     QObject::tr("%D Smoothing Period")
 };
 
+QString IndicatorStoch::id() const
+{
+    return "IndicatorStoch";
+}
+
 QString IndicatorStoch::name() const
 {
     return QObject::tr("Stoch %K–%D Histogram");
@@ -30,54 +35,49 @@ QString IndicatorStoch::description() const
 
 double IndicatorStoch::compute(
     std::deque<std::vector<double>>& q,
-    int colIndexValue,
-    int, int, int,
+    int /*colIndexLow*/,
+    int /*colIndexHigh*/,
+    int /*colIndexOpen*/,
+    int colIndexClose,
+    int /*colIndexVolume*/,
     const Tick*,
     const QMap<QString, QVariant>& params) const
 {
-    int kPeriod = params.value(PAR_ID_K_PERIOD).toInt();
-    int dPeriod = params.value(PAR_ID_D_PERIOD).toInt();
+    int kPeriod    = params.value(PAR_ID_K_PERIOD).toInt();
+    int dPeriod    = params.value(PAR_ID_D_PERIOD).toInt();
     int bufferSize = params.value(PAR_ID_SIZE_SAMPLE).toInt();
 
     // how many bars we actually have
     int sizeSample = qMin(int(q.size()), bufferSize);
-    // we need at least kPeriod bars to compute one %K,
-    // plus (dPeriod−1) more to average into %D
+    // need at least kPeriod bars plus (dPeriod-1) for %D
     if (sizeSample < kPeriod + dPeriod - 1)
-    {
         return std::numeric_limits<double>::quiet_NaN();
-    }
 
-    // extract just the price series
+    // extract closing prices
     std::vector<double> prices(sizeSample);
     for (int i = 0; i < sizeSample; ++i)
-    {
-        prices[i] = q[i][colIndexValue];
-    }
+        prices[i] = q[i][colIndexClose];
 
-    // compute %K series: (price – lowestLow)/(highestHigh – lowestLow) * 100
+    // compute %K series: (close – lowestLow)/(highestHigh – lowestLow) * 100
     int kCount = sizeSample - kPeriod + 1;
     std::vector<double> kSeries;
     kSeries.reserve(kCount);
-    for (int start = 0; start < kCount; ++start)
-    {
+    for (int start = 0; start < kCount; ++start) {
         auto first = prices.begin() + start;
         auto last  = first + kPeriod;
         double low  = *std::min_element(first, last);
         double high = *std::max_element(first, last);
         double curr = prices[start + kPeriod - 1];
         double kVal = (high > low)
-                          ? ((curr - low) / (high - low)) * 100.0
-                          : 0.0;
+            ? ((curr - low) / (high - low)) * 100.0
+            : 0.0;
         kSeries.push_back(kVal);
     }
 
     // compute %D as simple MA of the last dPeriod %K values
     double sumD = 0.0;
     for (int i = kCount - dPeriod; i < kCount; ++i)
-    {
         sumD += kSeries[i];
-    }
     double dVal = sumD / dPeriod;
 
     // histogram: last %K minus %D

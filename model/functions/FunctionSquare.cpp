@@ -4,6 +4,11 @@
 
 RECORD_FUNCTION(FunctionSquare);
 
+QString FunctionSquare::id() const
+{
+    return "FunctionSquare";
+}
+
 QString FunctionSquare::name() const
 {
     return QObject::tr("Square");

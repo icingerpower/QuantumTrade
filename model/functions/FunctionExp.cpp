@@ -2,7 +2,12 @@
 
 #include "FunctionExp.h"
 
-//RECORD_FUNCTION(FunctionExp); We won't use it for now
+RECORD_FUNCTION(FunctionExp);
+
+QString FunctionExp::id() const
+{
+    return "functionExp";
+}
 
 QString FunctionExp::name() const
 {

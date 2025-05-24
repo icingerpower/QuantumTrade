@@ -30,6 +30,10 @@ private:
     static const QString PARAM_DAYS_LIFESPAN;
     static const QString PARAM_TICK;
     static const QString PARAM_TICK_GAP_PREDICTION;
+    static const QString PARAM_PCA_N_COMPONENTS;
+    static const QString PARAM_N_PAIRS_INVEST;
+    static const QString PARAM_STOP_LOSS;
+    static const QString PARAM_TAKE_PROFIT;
     struct ParamInfo{
         QString id;
         QString name;

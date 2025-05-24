@@ -2,9 +2,14 @@
 
 RECORD_FUNCTION(FunctionLogReturn);
 
+QString FunctionLogReturn::id() const
+{
+    return "FunctionLogReturn";
+}
+
 QString FunctionLogReturn::name() const
 {
-    return QObject::tr("Log");
+    return QObject::tr("Log return");
 }
 
 QString FunctionLogReturn::description() const

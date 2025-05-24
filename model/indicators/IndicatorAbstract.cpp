@@ -10,4 +10,10 @@ QList<const IndicatorAbstract *> IndicatorAbstract::ALL_INDICATORS;
 IndicatorAbstract::Recorder::Recorder(const IndicatorAbstract *indicator)
 {
     IndicatorAbstract::ALL_INDICATORS << indicator;
+    std::sort(ALL_INDICATORS.begin(), ALL_INDICATORS.end());
+}
+
+QList<const IndicatorAbstract *> &IndicatorAbstract::allIndicators()
+{
+    return ALL_INDICATORS;
 }

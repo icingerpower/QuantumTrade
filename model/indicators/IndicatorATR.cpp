@@ -3,6 +3,11 @@
 
 RECORD_INDICATOR(IndicatorATR);
 
+QString IndicatorATR::id() const
+{
+    return "IndicatorATR";
+}
+
 QString IndicatorATR::name() const
 {
     return QObject::tr("ATR (close-to-close)");
@@ -14,11 +19,14 @@ QString IndicatorATR::description() const
 }
 
 double IndicatorATR::compute(
-    std::deque<std::vector<double>>& queueOfValues,
-    int, int, int,
-    int colIndexClose,
-    const Tick*,
-    const QMap<QString, QVariant>& params) const
+        std::deque<std::vector<double>>& queueOfValues,
+        int,
+        int,
+        int,
+        int colIndexClose,
+        int,
+        const Tick*,
+        const QMap<QString, QVariant>& params) const
 {
     // buffer size = N+1 (we need one extra bar to form N deltas)
     int sizeSample = qMin(int(queueOfValues.size()),

@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QList<QStringList>>();
     qRegisterMetaType<QHash<QString, QSet<QString>>>();
     qRegisterMetaType<QHash<QString, QVariant>>();
+    qRegisterMetaType<QSet<QString>>();
 
     QApplication a(argc, argv);
     WorkingDirectoryManager::instance()->installDarkOrangePalette();

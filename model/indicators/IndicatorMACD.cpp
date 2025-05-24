@@ -22,6 +22,11 @@ QPair<QString, QString> IndicatorMACD::PAR_ID_NAME_SIGNAL_PERIOD{
     QObject::tr("Signal EMA Period")
 };
 
+QString IndicatorMACD::id() const
+{
+    return "IndicatorMACD";
+}
+
 QString IndicatorMACD::name() const
 {
     return QObject::tr("MACD Histogram");
@@ -34,8 +39,11 @@ QString IndicatorMACD::description() const
 
 double IndicatorMACD::compute(
     std::deque<std::vector<double>>& queueOfValues,
-    int colIndexValue,
-    int, int, int,
+    int /*colIndexLow*/,
+    int /*colIndexHigh*/,
+    int /*colIndexOpen*/,
+    int colIndexClose,
+    int /*colIndexVolume*/,
     const Tick*,
     const QMap<QString, QVariant>& params) const
 {
@@ -46,15 +54,13 @@ double IndicatorMACD::compute(
 
     int sizeSample = qMin(int(queueOfValues.size()), bufferSize);
     if (sizeSample < slowPeriod + signalPeriod)
-    {
         return std::numeric_limits<double>::quiet_NaN();
-    }
 
-    // copy relevant prices
+    // copy closing prices
     std::vector<double> prices(sizeSample);
     for (int i = 0; i < sizeSample; ++i)
     {
-        prices[i] = queueOfValues[i][colIndexValue];
+        prices[i] = queueOfValues[i][colIndexClose];
     }
 
     // EMA helper
@@ -67,7 +73,7 @@ double IndicatorMACD::compute(
         return ema;
     };
 
-    // build MACD series
+    // build MACD series: fastEMA – slowEMA
     std::vector<double> macdSeries;
     macdSeries.reserve(sizeSample - slowPeriod + 1);
     for (int offset = 0; offset <= sizeSample - slowPeriod; ++offset)
@@ -76,23 +82,23 @@ double IndicatorMACD::compute(
         std::vector<double> window(
             prices.begin() + offset,
             prices.begin() + offset + slowPeriod
-            );
+        );
         double slowE = calcEMA(slowPeriod, window);
 
-        // fast EMA over its tail
+        // fast EMA over the tail of that window
         std::vector<double> fastWindow(
             window.begin() + (slowPeriod - fastPeriod),
             window.end()
-            );
+        );
         double fastE = calcEMA(fastPeriod, fastWindow);
 
         macdSeries.push_back(fastE - slowE);
     }
 
-    // signal line over MACD
-    double signal = calcEMA(signalPeriod, macdSeries);
-    double lastMacd = macdSeries.back();
-    return lastMacd - signal;
+    // signal line over the MACD series
+    double signal    = calcEMA(signalPeriod, macdSeries);
+    double lastMACD  = macdSeries.back();
+    return lastMACD - signal;
 }
 
 QList<QMap<QString, QVariant>> IndicatorMACD::possibleParams() const

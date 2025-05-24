@@ -4,6 +4,11 @@
 
 RECORD_INDICATOR(IndicatorVWAPDev);
 
+QString IndicatorVWAPDev::id() const
+{
+    return "IndicatorVWAPDev";
+}
+
 QString IndicatorVWAPDev::name() const
 {
     return QObject::tr("VWAP Deviation");
@@ -15,12 +20,14 @@ QString IndicatorVWAPDev::description() const
 }
 
 double IndicatorVWAPDev::compute(
-    std::deque<std::vector<double>>& queueOfValues,
-    int colIndexValue,
-    int colIndexVolume,
-    int, int,
-    const Tick*,
-    const QMap<QString, QVariant>& params) const
+        std::deque<std::vector<double>>& queueOfValues,
+        int colIndexLow,
+        int colIndexHigh,
+        int colIndexOpen,
+        int colIndexClose,
+        int colIndexVolume,
+        const Tick*,
+        const QMap<QString, QVariant>& params) const
 {
     // Determine how many bars we actually have
     int sizeSample = qMin(int(queueOfValues.size()),
@@ -35,7 +42,7 @@ double IndicatorVWAPDev::compute(
     double sumV  = 0.0;
     for (int i = 0; i < sizeSample; ++i)
     {
-        double price = queueOfValues[i][colIndexValue];
+        double price = queueOfValues[i][colIndexClose];
         double vol   = queueOfValues[i][colIndexVolume];
         sumPV += price * vol;
         sumV  += vol;
@@ -46,7 +53,7 @@ double IndicatorVWAPDev::compute(
     }
 
     double vwap = sumPV / sumV;
-    double lastPrice = queueOfValues[sizeSample - 1][colIndexValue];
+    double lastPrice = queueOfValues[sizeSample - 1][colIndexClose];
 
     // return percentage deviation (lastPrice - VWAP) / VWAP
     return (lastPrice - vwap) / vwap;

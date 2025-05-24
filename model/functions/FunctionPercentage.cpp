@@ -2,6 +2,11 @@
 
 RECORD_FUNCTION(FunctionPercentage);
 
+QString FunctionPercentage::id() const
+{
+    return "FunctionPercentage";
+}
+
 QString FunctionPercentage::name() const
 {
     return QObject::tr("Percentage");
