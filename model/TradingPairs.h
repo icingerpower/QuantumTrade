@@ -11,6 +11,7 @@ class TradingPairs : public QAbstractTableModel
 
 public:
     explicit TradingPairs(const QString &templateId, QObject *parent = nullptr);
+    bool isRowChecked(int row) const;
 
     QVariant headerData(int section,
                         Qt::Orientation orientation,

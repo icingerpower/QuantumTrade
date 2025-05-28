@@ -3,6 +3,8 @@
 
 #include <QAbstractItemModel>
 
+class Tick;
+
 class TemplateParams : public QAbstractTableModel
 {
     Q_OBJECT
@@ -10,6 +12,7 @@ class TemplateParams : public QAbstractTableModel
 public:
     explicit TemplateParams(const QString &templateId, QObject *parent = nullptr);
     QVariant getValue(const QString &paramId) const;
+    const Tick *getTick() const;
 
     // Header:
     QVariant headerData(int section,

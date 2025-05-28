@@ -33,7 +33,8 @@ public:
     virtual QString name() const = 0;
     virtual QString nameDataBase() const = 0;
 
-    QDateTime readLastDateTime(const Tick &tick) const;
+    QDateTime readDateTimeEnd(const Tick &tick) const;
+    QDateTime readDateTimeStart(const Tick &tick) const;
     QSharedPointer<std::vector<double>> readData(const Tick &tick,
             const QString &typeValueId,
             const QDateTime &dateFrom,

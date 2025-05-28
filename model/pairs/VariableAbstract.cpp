@@ -29,7 +29,7 @@ void VariableAbstract::setDatabaseFolder(const QString &dbFolderPath)
     DB_FOLDER_PATH = dbFolderPath;
 }
 
-QDateTime VariableAbstract::readLastDateTime(const Tick &tick) const
+QDateTime VariableAbstract::readDateTimeEnd(const Tick &tick) const
 {
     QDateTime lastDateTime;
     QSqlDatabase db = getDatabaseOpened(tick.id());
@@ -56,6 +56,64 @@ QDateTime VariableAbstract::readLastDateTime(const Tick &tick) const
     if (!query.exec(selectMaxQueryStr))
     {
         qWarning() << "Error executing SELECT MAX query:" << query.lastError().text();
+        return lastDateTime; // Returns an invalid QDateTime
+    }
+
+    // 5. Process the query result
+    if (query.next())
+    {
+        QVariant maxDateVariant = query.value(0);
+        if (!maxDateVariant.isNull())
+        {
+            // Convert the retrieved string to QDateTime using ISO8601 format
+            lastDateTime = QDateTime::fromString(maxDateVariant.toString(), Qt::ISODate);
+            if (!lastDateTime.isValid())
+            {
+                qWarning() << "Invalid dateTime format retrieved:" << maxDateVariant.toString();
+                // Optionally, you can handle this case differently, e.g., throw an exception
+            }
+        }
+        else
+        {
+            qWarning() << "No records found in table" << tableName << "for Tick ID:" << tick.id();
+            // lastDateTime remains invalid
+        }
+    }
+    else
+    {
+        qWarning() << "Failed to retrieve MAX(dateTime) from table" << tableName;
+        // lastDateTime remains invalid
+    }
+    return lastDateTime;
+}
+
+QDateTime VariableAbstract::readDateTimeStart(const Tick &tick) const
+{
+    QDateTime lastDateTime;
+    QSqlDatabase db = getDatabaseOpened(tick.id());
+    if (!db.isOpen())
+    {
+        qWarning() << "Database is not open for Tick ID:" << tick.id();
+        return lastDateTime; // Returns an invalid QDateTime
+    }
+
+    // 2. Define the table name (ensure it matches the one used in recordInDatabase)
+    const QString tableName = QStringLiteral("measurements");
+
+    // 3. Check if the table exists
+    if (!db.tables().contains(tableName))
+    {
+        qWarning() << "Table" << tableName << "does not exist in the database.";
+        return lastDateTime; // Returns an invalid QDateTime
+    }
+
+    // 4. Prepare the SELECT MAX(dateTime) query
+    QString selectMaxQueryStr = QString("SELECT MIN(dateTime) FROM %1").arg(tableName);
+
+    QSqlQuery query(db);
+    if (!query.exec(selectMaxQueryStr))
+    {
+        qWarning() << "Error executing SELECT MIN query:" << query.lastError().text();
         return lastDateTime; // Returns an invalid QDateTime
     }
 

@@ -7,8 +7,9 @@
 class VariableAbstract;
 struct VariableAvailability{
     VariableAbstract *variable;
-    QSet<QString> tickIdsHistory;
-    QSet<QString> tickIdsNoHistory;
+    QSet<QString> tickIds;
+    //QSet<QString> tickIdsHistory; //We assume all have history
+    //QSet<QString> tickIdsNoHistory;
 };
 
 #endif // VARIABLEAVAILABLILITY_H

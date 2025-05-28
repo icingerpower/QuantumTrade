@@ -107,11 +107,13 @@ StreamReaderAalphavantageStock::availableVariables() const
     for (const auto &symbol : stockSymbols)
     {
         VariableAvailability variableAvailable;
-        variableAvailable.tickIdsHistory = {Tick::TICK_MIN_1.id()
+        variableAvailable.tickIds = {Tick::TICK_MIN_1.id()
                                      , Tick::TICK_MIN_5.id()
                                      , Tick::TICK_MIN_15.id()
                                      , Tick::TICK_MIN_30.id()
-                                     , Tick::TICK_HOUR_1.id()};
+                                     , Tick::TICK_HOUR_1.id()
+                                     , Tick::TICK_DAY_1.id()
+        };
         variableAvailable.variable = new Stock{symbol, "USD"};
         availableVars.insert(variableAvailable.variable->name(), variableAvailable);
     }
@@ -171,7 +173,7 @@ QSharedPointer<Job> StreamReaderAalphavantageStock::readLatestData(
             {
                 auto stock = static_cast<Stock *>(variable);
                 // Fetch the last recorded date for the given tick
-                QDateTime lastDateTime = variables.first()->readLastDateTime(tick);
+                QDateTime lastDateTime = variables.first()->readDateTimeEnd(tick);
                 newLastDateTime = lastDateTime;
 
                 // Make an API call to Alpha Vantage

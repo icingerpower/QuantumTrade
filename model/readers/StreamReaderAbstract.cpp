@@ -49,9 +49,7 @@ QMap<QString, VariableAvailability> StreamReaderAbstract::allAvailableVariables(
             }
             else
             {
-                variables[name].tickIdsHistory.unite(readerVariable.tickIdsHistory);
-                variables[name].tickIdsNoHistory.unite(readerVariable.tickIdsNoHistory);
-                variables[name].tickIdsNoHistory.subtract(variables[name].tickIdsHistory);
+                variables[name].tickIds.unite(readerVariable.tickIds);
             }
         }
     }
@@ -71,8 +69,7 @@ QMultiHash<QString, VariableAvailability> StreamReaderAbstract::availableVariabl
     for (auto it = variables.begin();
          it != variables.end(); ++it)
     {
-        if (it.value().tickIdsHistory.contains(tick.id())
-                || it.value().tickIdsNoHistory.contains(tick.id()))
+        if (it.value().tickIds.contains(tick.id()))
         {
             tickVariables.insert(it.key(), it.value());
         }

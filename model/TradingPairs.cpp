@@ -33,6 +33,18 @@ TradingPairs::TradingPairs(const QString &templateId, QObject *parent)
     _loadFromSettings();
 }
 
+bool TradingPairs::isRowChecked(int row) const
+{
+    for (const auto &checkState : m_checked[row])
+    {
+        if (checkState == Qt::Checked)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void TradingPairs::_loadFromSettings()
 {
     auto settings = WorkingDirectoryManager::instance()->settingsLocalIfClient();
@@ -105,13 +117,9 @@ void TradingPairs::_initColInfos()
                       tr("If the pair is available for the period") + " " + tick->name(),
                       false,
                       [tickId](const VariableAvailability *variable) -> QVariant {
-            if (variable->tickIdsHistory.contains(tickId))
+            if (variable->tickIds.contains(tickId))
             {
-                return QObject::tr("With history");
-            }
-            else if (variable->tickIdsNoHistory.contains(tickId))
-            {
-                return QObject::tr("Without history");
+                return QObject::tr("Yes");
             }
             return QVariant{};
         }};

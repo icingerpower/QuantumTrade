@@ -6,14 +6,20 @@ include(${CMAKE_CURRENT_LIST_DIR}/indicators/indicators.cmake)
 set(MODEL_FILES
         ${CMAKE_CURRENT_LIST_DIR}/TradingPairs.h
         ${CMAKE_CURRENT_LIST_DIR}/TradingPairs.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/TradingPairsSelected.h
+        ${CMAKE_CURRENT_LIST_DIR}/TradingPairsSelected.cpp
         ${CMAKE_CURRENT_LIST_DIR}/Functions.h
         ${CMAKE_CURRENT_LIST_DIR}/Functions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/Indicators.h
         ${CMAKE_CURRENT_LIST_DIR}/Indicators.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorsSelected.h
+        ${CMAKE_CURRENT_LIST_DIR}/IndicatorsSelected.cpp
         ${CMAKE_CURRENT_LIST_DIR}/TemplateManager.h
         ${CMAKE_CURRENT_LIST_DIR}/TemplateManager.cpp
         ${CMAKE_CURRENT_LIST_DIR}/TemplateParams.h
         ${CMAKE_CURRENT_LIST_DIR}/TemplateParams.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/TemplateParamsSelected.h
+        ${CMAKE_CURRENT_LIST_DIR}/TemplateParamsSelected.cpp
         ${PAIRS_FILES}
         ${READERS_FILES}
         ${FUNCTION_FILES}

@@ -16,7 +16,7 @@ public:
     explicit PaneTemplates(QWidget *parent = nullptr);
     ~PaneTemplates();
 
-public slots:
+private slots:
     void addTemplate();
     void removeTemplate();
     void onTemplateSelected(

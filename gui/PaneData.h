@@ -2,6 +2,7 @@
 #define PANEDATA_H
 
 #include <QWidget>
+#include <QItemSelection>
 
 namespace Ui {
 class PaneData;
@@ -15,8 +16,13 @@ public:
     explicit PaneData(QWidget *parent = nullptr);
     ~PaneData();
 
+private slots:
+    void onTemplateSelected(
+            const QItemSelection &selected, const QItemSelection &deselected);
+
 private:
     Ui::PaneData *ui;
+    void _connectSlots();
 };
 
 #endif // PANEDATA_H

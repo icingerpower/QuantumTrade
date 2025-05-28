@@ -28,6 +28,12 @@ QVariant TemplateParams::getValue(const QString &paramId) const
     return m_params[m_idToParamIndex[paramId]].value;
 }
 
+const Tick *TemplateParams::getTick() const
+{
+    const Tick *tick = getValue(PARAM_TICK).value<const Tick *>();
+    return tick;
+}
+
 void TemplateParams::_initParams()
 {
     m_params << ParamInfo{
