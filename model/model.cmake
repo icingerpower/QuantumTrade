@@ -20,6 +20,8 @@ set(MODEL_FILES
         ${CMAKE_CURRENT_LIST_DIR}/TemplateParams.cpp
         ${CMAKE_CURRENT_LIST_DIR}/TemplateParamsSelected.h
         ${CMAKE_CURRENT_LIST_DIR}/TemplateParamsSelected.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/ApiParams.h
+        ${CMAKE_CURRENT_LIST_DIR}/ApiParams.cpp
         ${PAIRS_FILES}
         ${READERS_FILES}
         ${FUNCTION_FILES}

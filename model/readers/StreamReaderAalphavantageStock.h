@@ -11,6 +11,8 @@ class StreamReaderAalphavantageStock : public StreamReaderAbstract
 {
 public:
     StreamReaderAalphavantageStock();
+    QString id() const override;
+    QString name() const override;
     SortedMap<QString, Param> paramsDefault() const override;
     QMultiHash<QString, VariableAvailability> availableVariables() const override;
     QSharedPointer<Job> readLatestData(

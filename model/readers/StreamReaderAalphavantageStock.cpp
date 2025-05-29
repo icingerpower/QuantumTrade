@@ -20,7 +20,16 @@ RECORD_STREAMER(StreamReaderAalphavantageStock)
 StreamReaderAalphavantageStock::StreamReaderAalphavantageStock()
     : StreamReaderAbstract()
 {
+}
 
+QString StreamReaderAalphavantageStock::id() const
+{
+    return "StreamReaderAlphavantageStock";
+}
+
+QString StreamReaderAalphavantageStock::name() const
+{
+    return "Alphavantage";
 }
 
 SortedMap<QString, StreamReaderAalphavantageStock::Param> StreamReaderAalphavantageStock::paramsDefault() const

@@ -18,7 +18,7 @@ class StreamReaderAbstract
 public:
     struct Param{
         QString name;
-        QVariant Value;
+        QVariant value;
     };
     static const QString PARAM_API_KEY;
     static const Param PARAM_API_KEY_NAME_VALUE;
@@ -37,6 +37,8 @@ public:
         bool withoutHistoryOnly = false,
         QSharedPointer<Job> job = QSharedPointer<Job>{new Job});
 
+    virtual QString id() const = 0;
+    virtual QString name() const = 0;
     virtual SortedMap<QString, Param> paramsDefault() const = 0;
 
     virtual QMultiHash<QString, VariableAvailability> availableVariables() const = 0;

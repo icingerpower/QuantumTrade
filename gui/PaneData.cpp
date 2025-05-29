@@ -24,6 +24,10 @@ PaneData::~PaneData()
 
 void PaneData::_connectSlots()
 {
+    connect(ui->buttonRun,
+            &QPushButton::clicked,
+            this,
+            &PaneData::run);
     connect(ui->listViewTemplates->selectionModel(),
             &QItemSelectionModel::selectionChanged,
             this,
@@ -57,4 +61,16 @@ void PaneData::onTemplateSelected(
         }
     }
 
+}
+
+void PaneData::run(bool start)
+{
+    if (start)
+    {
+
+    }
+    else
+    {
+
+    }
 }

@@ -19,6 +19,7 @@ public:
 private slots:
     void onTemplateSelected(
             const QItemSelection &selected, const QItemSelection &deselected);
+    void run(bool start);
 
 private:
     Ui::PaneData *ui;

@@ -58,17 +58,23 @@
         <string>Data</string>
        </property>
       </item>
+      <item>
+       <property name="text">
+        <string>Settings</string>
+       </property>
+      </item>
      </widget>
     </item>
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>4</number>
       </property>
       <widget class="PaneTemplates" name="pageTemplates"/>
       <widget class="PaneModels" name="pageModels"/>
       <widget class="PaneSimulation" name="pageSimulation"/>
       <widget class="PaneData" name="pageData"/>
+      <widget class="PaneSettings" name="pageSettings"/>
      </widget>
     </item>
    </layout>
@@ -108,6 +114,12 @@
    <class>PaneSimulation</class>
    <extends>QWidget</extends>
    <header>gui/PaneSimulation.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PaneSettings</class>
+   <extends>QWidget</extends>
+   <header>gui/PaneSettings.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
