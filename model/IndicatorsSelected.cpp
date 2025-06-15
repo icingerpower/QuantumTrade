@@ -5,7 +5,7 @@
 IndicatorsSelected::IndicatorsSelected(
     const QString &templateId, QObject *parent)
 {
-    setSourceModel(new Indicators{templateId, this});
+    setSourceModel(Indicators::instance(templateId));
 }
 
 bool IndicatorsSelected::filterAcceptsRow(

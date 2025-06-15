@@ -1,10 +1,20 @@
+#include <QMutexLocker>
+#include <QSettings>
+
 #include "model/pairs/VariableAbstract.h"
 
 #include "StreamReaderAbstract.h"
 
+QMutex StreamReaderAbstract::MUTEX;
 const StreamReaderAbstract::Param StreamReaderAbstract::PARAM_API_KEY_NAME_VALUE{
     QObject::tr("API Key"), QString{}};
 const QString StreamReaderAbstract::PARAM_API_KEY{"apiKey"};
+const QString StreamReaderAbstract::PARAM_ELASPED_MS{"elapsedBetweenQueryMs"};
+const StreamReaderAbstract::Param StreamReaderAbstract::PARAM_ELASPED_MS_NAME_VALUE{
+    QObject::tr("Elapsed ms between queries"), 10000}; // 3456000
+const QString StreamReaderAbstract::PARAM_MAX_PER_DAY{"maxPerDay"};
+const StreamReaderAbstract::Param StreamReaderAbstract::PARAM_MAX_PER_DAY_NAME_VALUE{
+    QObject::tr("Max per day"), 25};
 
 QList<const StreamReaderAbstract *> StreamReaderAbstract::ALL_STREAM_READERS;
 
@@ -75,6 +85,43 @@ QMultiHash<QString, VariableAvailability> StreamReaderAbstract::availableVariabl
         }
     }
     return tickVariables;
+}
+
+QDateTime StreamReaderAbstract::currentDateTime() const
+{
+    return QDateTime::currentDateTime(timeZone());
+}
+
+void StreamReaderAbstract::readData(
+    const SortedMap<QString, QVariant> &params,
+    const Tick &tick,
+    QList<VariableAbstract *> variables,
+    const QDate &dateFrom,
+    const QDate &dateTo,
+    QSharedPointer<Job> job) const
+{
+    for (auto variable : variables)
+    {
+        readData(params, tick, variable, dateFrom, dateTo, job);
+    }
+}
+
+QVariant StreamReaderAbstract::getSettingsValue(
+    const QString &key,
+    const QVariant &defaultValue)
+{
+    QMutexLocker locker{&MUTEX};
+    QSettings settings;
+    return settings.value(key, defaultValue);
+}
+
+void StreamReaderAbstract::setSettingsValue(
+    const QString &key, const QVariant &value)
+{
+    QMutexLocker locker{&MUTEX};
+    QSettings settings;
+    settings.setValue(key, value);
+    settings.sync();
 }
 
 /*

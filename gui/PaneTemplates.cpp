@@ -103,19 +103,16 @@ void PaneTemplates::onTemplateSelected(
             auto firstIndex = selected.indexes().first();
             const auto &templateId = TemplateManager::instance()->getId(firstIndex);
 
-            auto tradingPairsModel = new TradingPairs{templateId, ui->tableViewPairs};
-            ui->tableViewPairs->setModel(tradingPairsModel);
+            ui->tableViewPairs->setModel(TradingPairs::instance(templateId));
             QHeaderView* header = ui->tableViewPairs->horizontalHeader();
             header->setSectionsClickable(true);
 
             auto functionsModel = new Functions{templateId, ui->listViewPairTransformations};
             ui->listViewPairTransformations->setModel(functionsModel);
 
-            auto indicatorsModel = new Indicators{templateId, ui->listViewIndicators};
-            ui->listViewIndicators->setModel(indicatorsModel);
+            ui->listViewIndicators->setModel(Indicators::instance(templateId));
 
-            auto templateParams = new TemplateParams{templateId, ui->tableViewParams};
-            ui->tableViewParams->setModel(templateParams);
+            ui->tableViewParams->setModel(TemplateParams::instance(templateId));
         }
     }
 }

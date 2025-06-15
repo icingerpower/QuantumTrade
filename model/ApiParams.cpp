@@ -10,6 +10,8 @@ const QStringList ApiParams::COL_NAMES{
     , QObject::tr("Value")
 };
 const int ApiParams::IND_VALUE = 2;
+const int ApiParams::IND_ID_PARAM = 3;
+const int ApiParams::IND_ID_READER = 4;
 const QString ApiParams::SETTINGS_KEY{"ApiParams"};
 
 ApiParams::ApiParams(QObject *parent)
@@ -28,6 +30,7 @@ ApiParams::ApiParams(QObject *parent)
                 << QVariantList{name,
                                 it.value().name,
                                 it.value().value,
+                                it.key(),
                                 id};
         }
     }
@@ -38,14 +41,19 @@ void ApiParams::_loadFromSettings()
 {
     auto settings = WorkingDirectoryManager::instance()
                         ->settingsLocalIfClient();
-    auto id_values = settings->value(SETTINGS_KEY)
-                         .value<QHash<QString, QVariant>>();
-    for (auto &variantList : m_listOfVariantList)
+    if (settings->contains(SETTINGS_KEY))
     {
-        const auto &id = variantList.last().toString();
-        if (id_values.contains(id))
+        auto idReader_idParam_values = settings->value(SETTINGS_KEY)
+        .value<QHash<QString, QHash<QString, QVariant>>>();
+        for (auto &variantList : m_listOfVariantList)
         {
-            variantList[IND_VALUE] = id_values[id];
+            const auto& idReader = variantList[IND_ID_READER].toString();
+            const auto& idParam = variantList[IND_ID_PARAM].toString();
+            if (idReader_idParam_values.contains(idReader)
+                && idReader_idParam_values[idReader].contains(idParam))
+            {
+                variantList[IND_VALUE] = idReader_idParam_values[idReader][idParam];
+            }
         }
     }
 }
@@ -53,12 +61,14 @@ void ApiParams::_loadFromSettings()
 void ApiParams::_saveInSettings()
 {
     auto settings = WorkingDirectoryManager::instance()->settingsLocalIfClient();
-    QHash<QString, QVariant> id_values;
+    QHash<QString, QHash<QString, QVariant>> idReader_idParam_values;
     for (const auto &variantList : m_listOfVariantList)
     {
-        id_values[variantList.last().toString()] = variantList[IND_VALUE];
+        const auto& idReader = variantList[IND_ID_READER].toString();
+        const auto& idParam = variantList[IND_ID_PARAM].toString();
+        idReader_idParam_values[idReader][idParam] = variantList[IND_VALUE];
     }
-    settings->setValue(SETTINGS_KEY, QVariant::fromValue(id_values));
+    settings->setValue(SETTINGS_KEY, QVariant::fromValue(idReader_idParam_values));
 }
 
 ApiParams *ApiParams::instance()
@@ -74,6 +84,21 @@ QVariant ApiParams::headerData(int section, Qt::Orientation orientation, int rol
         return COL_NAMES[section];
     }
     return QVariant{};
+}
+
+SortedMap<QString, QVariant> ApiParams::getParams(
+    const StreamReaderAbstract *streamReader) const
+{
+    SortedMap<QString, QVariant> params;
+    for (const auto &listParams : m_listOfVariantList)
+    {
+        if (listParams[IND_ID_READER].toString() == streamReader->id())
+        {
+            QString paramId = listParams[IND_ID_PARAM].toString();
+            params[paramId] = listParams[IND_VALUE];
+        }
+    }
+    return params;
 }
 
 int ApiParams::rowCount(const QModelIndex &parent) const
@@ -114,7 +139,7 @@ Qt::ItemFlags ApiParams::flags(const QModelIndex &index) const
 {
     if (index.column() == IND_VALUE)
     {
-        return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+        return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
     }
-    return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+    return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }

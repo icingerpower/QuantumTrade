@@ -33,6 +33,18 @@ TradingPairs::TradingPairs(const QString &templateId, QObject *parent)
     _loadFromSettings();
 }
 
+TradingPairs *TradingPairs::instance(const QString &templateId)
+{
+    static QHash<QString, TradingPairs *> instances;
+    if (!instances.contains(templateId))
+    {
+        static QList<QSharedPointer<TradingPairs>> list;
+        list << QSharedPointer<TradingPairs>{new TradingPairs{templateId}};
+        instances[templateId] = list.last().data();
+    }
+    return instances[templateId];
+}
+
 bool TradingPairs::isRowChecked(int row) const
 {
     for (const auto &checkState : m_checked[row])
@@ -43,6 +55,24 @@ bool TradingPairs::isRowChecked(int row) const
         }
     }
     return false;
+}
+
+QMultiHash<QString, VariableAvailability> TradingPairs::getSelectedVariables() const
+{
+    QMultiHash<QString, VariableAvailability> selectedVariables;
+    int i=0;
+    int nCols = columnCount();
+    auto variablesAvailability = StreamReaderAbstract::allAvailableVariables();
+    for (const auto &variableAvailability : variablesAvailability)
+    {
+        if (isRowChecked(i))
+        {
+            selectedVariables[variableAvailability.variable->name()]
+                = variableAvailability;
+        }
+        ++i;
+    }
+    return selectedVariables;
 }
 
 void TradingPairs::_loadFromSettings()

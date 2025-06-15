@@ -24,6 +24,18 @@ Indicators::Indicators(const QString &templateId, QObject *parent)
     _loadFromSettings();
 }
 
+Indicators *Indicators::instance(const QString &templateId)
+{
+    static QHash<QString, Indicators *> instances;
+    if (!instances.contains(templateId))
+    {
+        static QList<QSharedPointer<Indicators>> list;
+        list << QSharedPointer<Indicators>{new Indicators{templateId}};
+        instances[templateId] = list.last().data();
+    }
+    return instances[templateId];
+}
+
 int Indicators::rowCount(const QModelIndex &parent) const
 {
     return m_functionInfos.size();

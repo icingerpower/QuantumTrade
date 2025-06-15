@@ -1,3 +1,5 @@
+#include <QSharedPointer>
+
 #include "../common/workingdirectory/WorkingDirectoryManager.h"
 
 #include "model/pairs/Tick.h"
@@ -21,6 +23,18 @@ TemplateParams::TemplateParams(const QString &templateId, QObject *parent)
     m_settingsKey = SETTINGS_KEY_BASE + templateId;
     _initParams();
     _loadFromSettings();
+}
+
+TemplateParams *TemplateParams::instance(const QString &templateId)
+{
+    static QHash<QString, TemplateParams *> instances;
+    if (!instances.contains(templateId))
+    {
+        static QList<QSharedPointer<TemplateParams>> list;
+        list << QSharedPointer<TemplateParams>{new TemplateParams{templateId}};
+        instances[templateId] = list.last().data();
+    }
+    return instances[templateId];
 }
 
 QVariant TemplateParams::getValue(const QString &paramId) const

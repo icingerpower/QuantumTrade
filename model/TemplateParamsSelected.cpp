@@ -5,19 +5,17 @@
 TemplateParamsSelected::TemplateParamsSelected(
     const QString &templateId, QObject *parent)
 {
-    setSourceModel(new TemplateParams{templateId, this});
+    setSourceModel(TemplateParams::instance(templateId));
 }
 
-bool TemplateParamsSelected::filterAcceptsRow(
-    int sourceRow, const QModelIndex &sourceParent) const
+QVariant TemplateParamsSelected::getValue(const QString &paramId) const
 {
-    return true;
+    return static_cast<TemplateParams *>(sourceModel())->getValue(paramId);
 }
 
-bool TemplateParamsSelected::filterAcceptsColumn(
-    int source_column, const QModelIndex &source_parent) const
+const Tick *TemplateParamsSelected::getTick() const
 {
-    return true;
+    return static_cast<TemplateParams *>(sourceModel())->getTick();
 }
 
 Qt::ItemFlags TemplateParamsSelected::flags(const QModelIndex &index) const

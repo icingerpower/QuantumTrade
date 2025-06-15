@@ -5,7 +5,13 @@
 TradingPairsSelected::TradingPairsSelected(
     const QString &templateId, QObject *parent)
 {
-    setSourceModel(new TradingPairs{templateId, this});
+    setSourceModel(TradingPairs::instance(templateId));
+}
+
+QMultiHash<QString, VariableAvailability> TradingPairsSelected::getSelectedVariables() const
+{
+    TradingPairs *tradingPairs = static_cast<TradingPairs *>(sourceModel());
+    return tradingPairs->getSelectedVariables();
 }
 
 bool TradingPairsSelected::filterAcceptsRow(

@@ -22,12 +22,14 @@ public:
 
     const QString &name() const;
 
-    int seconds() const;
+    qint64 seconds() const;
+    qint64 minutes() const;
+    qint64 hours() const;
 
 private:
     QString m_id;
     QString m_name;
-    int m_seconds;
+    qint64 m_seconds;
 };
 
 class TickComboBox : public QComboBox

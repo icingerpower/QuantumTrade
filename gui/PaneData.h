@@ -4,9 +4,14 @@
 #include <QWidget>
 #include <QItemSelection>
 
+#include "model/readers/Job.h"
+
 namespace Ui {
 class PaneData;
 }
+
+class TradingPairsSelected;
+class TemplateParamsSelected;
 
 class PaneData : public QWidget
 {
@@ -15,6 +20,8 @@ class PaneData : public QWidget
 public:
     explicit PaneData(QWidget *parent = nullptr);
     ~PaneData();
+    TradingPairsSelected *getTradingPairsSelected() const;
+    TemplateParamsSelected *getTemplateParamsSelected() const;
 
 private slots:
     void onTemplateSelected(
@@ -24,6 +31,7 @@ private slots:
 private:
     Ui::PaneData *ui;
     void _connectSlots();
+    QSharedPointer<Job> m_job;
 };
 
 #endif // PANEDATA_H

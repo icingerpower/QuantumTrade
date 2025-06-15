@@ -10,7 +10,7 @@ class Indicators : public QAbstractListModel
     Q_OBJECT
 
 public:
-    explicit Indicators(const QString &templateId, QObject *parent = nullptr);
+    static Indicators *instance(const QString &templateId);
 
     // Basic functionality:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -21,6 +21,7 @@ public:
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 private:
+    explicit Indicators(const QString &templateId, QObject *parent = nullptr);
     static const QString SETTINGS_KEY_BASE;
     struct IndicatorInfo{
         QString id;

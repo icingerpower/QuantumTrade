@@ -1,4 +1,5 @@
 #include <QSqlQuery>
+#include <QThread>
 #include <QSqlError>
 #include <QSqlRecord>
 #include <QObject>
@@ -27,6 +28,133 @@ QString VariableAbstract::DB_FOLDER_PATH;
 void VariableAbstract::setDatabaseFolder(const QString &dbFolderPath)
 {
     DB_FOLDER_PATH = dbFolderPath;
+}
+
+QList<QDateTime> VariableAbstract::readDateTimeMissing(
+    const QDate &start, const QDate &end, const Tick &tick) const
+{
+    QList<QDateTime> missingList;
+
+    // 1. Open the database connection
+    QSqlDatabase db = getDatabaseOpened(tick.id());
+    if (!db.isOpen())
+    {
+        qWarning() << "Database is not open for Tick ID:" << tick.id();
+        return missingList;
+    }
+
+    // 2. Define the table name
+    const QString tableName = QStringLiteral("measurements");
+    QSet<QDateTime> recorded;
+
+    QDateTime dtStart(start, QTime(0, 0, 0));
+    QDateTime dtEnd(end,   QTime(23, 59, 59));
+
+    if (db.tables().contains(tableName))
+    {
+        // 3. Query for all recorded dateTime values in that range
+        QString selectQueryStr =
+            QString("SELECT dateTime FROM %1 "
+                    "WHERE dateTime BETWEEN :start AND :end "
+                    "ORDER BY dateTime ASC")
+                .arg(tableName);
+
+        QSqlQuery query(db);
+        if (!query.prepare(selectQueryStr))
+        {
+            qWarning() << "Error preparing readDateTimeMissing query:"
+                       << query.lastError().text();
+            return missingList;
+        }
+        query.bindValue(":start", dtStart.toString(Qt::ISODate));
+        query.bindValue(":end",   dtEnd.toString(Qt::ISODate));
+
+        if (!query.exec())
+        {
+            qWarning() << "Error executing readDateTimeMissing query:"
+                       << query.lastError().text();
+            return missingList;
+        }
+
+        // 4. Collect all recorded timestamps into a set
+        while (query.next())
+        {
+            QString s = query.value(0).toString();
+            QDateTime dt = QDateTime::fromString(s, Qt::ISODate);
+            if (dt.isValid())
+                recorded.insert(dt);
+        }
+    }
+
+    // 5. Step through the full expected sequence and find gaps
+    const qint64 step = tick.seconds();
+    for (QDateTime cur = dtStart; cur <= dtEnd; cur = cur.addSecs(step))
+    {
+        if (!recorded.contains(cur))
+        {
+            missingList.append(cur);
+        }
+        else
+        {
+            int TEMP=0;++TEMP;
+        }
+    }
+
+    return missingList;
+}
+
+QList<QDate> VariableAbstract::readDaysMissing(const QList<QDateTime> &dateTimes) const
+{
+    QHash<int, QHash<int, int>> year_month_day;
+    for (const auto &dateTime : dateTimes)
+    {
+        const auto &date = dateTime.date();
+        year_month_day[date.year()][date.month()] = date.day();
+    }
+    QList<QDate> dates;
+    for (auto itYear = year_month_day.begin();
+         itYear != year_month_day.end(); ++itYear)
+    {
+        for (auto itMonthDay = itYear.value().begin();
+             itMonthDay != itYear.value().end(); ++itMonthDay)
+        {
+            dates << QDate{itYear.key(), itMonthDay.key(), itMonthDay.value()};
+        }
+    }
+    return dates;
+}
+
+QList<QDate> VariableAbstract::readDaysMissing(
+    const QDate &start, const QDate &end, const Tick &tick) const
+{
+    return readDaysMissing(readDateTimeMissing(start, end, tick));
+}
+
+QList<QDate> VariableAbstract::readMonthsMissing(const QList<QDateTime> &dateTimes) const
+{
+    QMap<int, QMap<int, int>> year_month;
+    for (const auto &dateTime : dateTimes)
+    {
+        const auto &date = dateTime.date();
+        year_month[date.year()][date.month()] = 1;
+    }
+    QList<QDate> dates;
+    for (auto itYear = year_month.begin();
+         itYear != year_month.end(); ++itYear)
+    {
+        for (auto itMonth = itYear.value().begin();
+             itMonth != itYear.value().end(); ++itMonth)
+        {
+            dates << QDate{itYear.key(), itMonth.value(), 1};
+        }
+    }
+    return dates;
+}
+
+QList<QDate> VariableAbstract::readMonthsMissing(
+    const QDate &start, const QDate &end, const Tick &tick) const
+{
+    return readMonthsMissing(readDateTimeMissing(start, end, tick));
 }
 
 QDateTime VariableAbstract::readDateTimeEnd(const Tick &tick) const
@@ -560,7 +688,7 @@ void VariableAbstract::recordInDatabase(
 
 QSqlDatabase VariableAbstract::getDatabaseOpened(const QString &tickId) const
 {
-    const QString &connectionName = nameDataBase() + "_" + tickId;
+    const QString &connectionName = _getDatabaseConnection(tickId);
     if (!QSqlDatabase::contains(connectionName))
     {
         if (DB_FOLDER_PATH.isEmpty())
@@ -590,8 +718,21 @@ QSqlDatabase VariableAbstract::getDatabaseOpened(const QString &tickId) const
     return QSqlDatabase::database(connectionName);
 }
 
+void VariableAbstract::closeDatabaseOpened(const QString &tickId) const
+{
+    const QString &connectionName = _getDatabaseConnection(tickId);
+    auto db = getDatabaseOpened(tickId);
+    db.close();
+    QSqlDatabase::removeDatabase(connectionName);
+}
+
 QString VariableAbstract::colName(const QString &typeValueId) const
 {
     return typeValueId;
+}
+
+QString VariableAbstract::_getDatabaseConnection(const QString &tickId) const
+{
+    return nameDataBase() + "_" + tickId + QString::number((quintptr)QThread::currentThread());
 }
 

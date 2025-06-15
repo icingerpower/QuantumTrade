@@ -1,17 +1,20 @@
 #ifndef TRADINGPAIRS_H
 #define TRADINGPAIRS_H
 
+#include "model/readers/VariableAvailablility.h"
+
 #include <QAbstractTableModel>
 
-struct VariableAvailability;
+class StreamReaderAbstract;
 
 class TradingPairs : public QAbstractTableModel
 {
     Q_OBJECT
 
 public:
-    explicit TradingPairs(const QString &templateId, QObject *parent = nullptr);
+    static TradingPairs *instance(const QString &templateId);
     bool isRowChecked(int row) const;
+    QMultiHash<QString, VariableAvailability> getSelectedVariables() const;
 
     QVariant headerData(int section,
                         Qt::Orientation orientation,
@@ -30,6 +33,7 @@ public:
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 private:
+    explicit TradingPairs(const QString &templateId, QObject *parent = nullptr);
     static const QString SETTINGS_KEY_BASE;
     void _initColInfos();
     void _loadFromSettings();

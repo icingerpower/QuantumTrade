@@ -62,8 +62,18 @@ const QString &Tick::name() const
     return m_name;
 }
 
-int Tick::seconds() const
+qint64 Tick::seconds() const
 {
     return m_seconds;
+}
+
+qint64 Tick::minutes() const
+{
+    return m_seconds / 60;
+}
+
+qint64 Tick::hours() const
+{
+    return m_seconds / 3600;
 }
 

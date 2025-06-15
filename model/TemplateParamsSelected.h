@@ -3,6 +3,8 @@
 
 #include <QSortFilterProxyModel>
 
+class Tick;
+
 class TemplateParamsSelected : public QSortFilterProxyModel
 {
     Q_OBJECT
@@ -10,10 +12,8 @@ class TemplateParamsSelected : public QSortFilterProxyModel
 public:
     explicit TemplateParamsSelected(
         const QString &templateId, QObject *parent = nullptr);
-    bool filterAcceptsRow(int sourceRow,
-                          const QModelIndex &sourceParent) const override;
-    bool filterAcceptsColumn(int source_column,
-                             const QModelIndex &source_parent) const override;
+    QVariant getValue(const QString &paramId) const;
+    const Tick *getTick() const;
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 };
 

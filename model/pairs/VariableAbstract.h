@@ -33,6 +33,22 @@ public:
     virtual QString name() const = 0;
     virtual QString nameDataBase() const = 0;
 
+    QList<QDateTime> readDateTimeMissing(
+        const QDate &start,
+        const QDate &end,
+        const Tick &tick) const;
+    QList<QDate> readDaysMissing(
+        const QList<QDateTime> &dateTimes) const;
+    QList<QDate> readDaysMissing(
+        const QDate &start,
+        const QDate &end,
+        const Tick &tick) const;
+    QList<QDate> readMonthsMissing(
+        const QList<QDateTime> &dateTimes) const;
+    QList<QDate> readMonthsMissing(
+        const QDate &start,
+        const QDate &end,
+        const Tick &tick) const;
     QDateTime readDateTimeEnd(const Tick &tick) const;
     QDateTime readDateTimeStart(const Tick &tick) const;
     QSharedPointer<std::vector<double>> readData(const Tick &tick,
@@ -54,11 +70,13 @@ public:
             const Tick &tick,
             const QList<QString> &typeValueIds,
             const QList<double> values);
+    void closeDatabaseOpened(const QString &tickId) const;
 
 private:
     static QString DB_FOLDER_PATH;
     QSqlDatabase getDatabaseOpened(const QString &tickId) const;
     QString colName(const QString &typeValueId) const;
+    QString _getDatabaseConnection(const QString &tickId) const;
 };
 
 #endif // VARIABLEABSTRACT_H

@@ -10,7 +10,16 @@ class TemplateParams : public QAbstractTableModel
     Q_OBJECT
 
 public:
-    explicit TemplateParams(const QString &templateId, QObject *parent = nullptr);
+    static const QString PARAM_DAYS_DATA;
+    static const QString PARAM_DAYS_LIFESPAN;
+    static const QString PARAM_TICK;
+    static const QString PARAM_TICK_GAP_PREDICTION;
+    static const QString PARAM_PCA_N_COMPONENTS;
+    static const QString PARAM_N_PAIRS_INVEST;
+    static const QString PARAM_STOP_LOSS;
+    static const QString PARAM_TAKE_PROFIT;
+
+    static TemplateParams *instance(const QString &templateId);
     QVariant getValue(const QString &paramId) const;
     const Tick *getTick() const;
 
@@ -29,14 +38,7 @@ public:
 
 private:
     static const QString SETTINGS_KEY_BASE;
-    static const QString PARAM_DAYS_DATA;
-    static const QString PARAM_DAYS_LIFESPAN;
-    static const QString PARAM_TICK;
-    static const QString PARAM_TICK_GAP_PREDICTION;
-    static const QString PARAM_PCA_N_COMPONENTS;
-    static const QString PARAM_N_PAIRS_INVEST;
-    static const QString PARAM_STOP_LOSS;
-    static const QString PARAM_TAKE_PROFIT;
+    explicit TemplateParams(const QString &templateId, QObject *parent = nullptr);
     struct ParamInfo{
         QString id;
         QString name;
