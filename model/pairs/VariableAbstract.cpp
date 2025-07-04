@@ -30,6 +30,25 @@ void VariableAbstract::setDatabaseFolder(const QString &dbFolderPath)
     DB_FOLDER_PATH = dbFolderPath;
 }
 
+QDateTime VariableAbstract::dateTimeFromDb(const QVariant &variantDate)
+{
+    const auto &maxDateStringFull = variantDate.toString();
+    const auto &maxDateStringWithoutTimespec = maxDateStringFull.left(
+        maxDateStringFull.size()-6);
+    const auto &timeZone = maxDateStringFull.right(6);
+    auto dataTime = QDateTime::fromString(
+        maxDateStringWithoutTimespec, "yyyy-MM-ddThh:mm:ss");
+    int sign      = (timeZone[0] == QLatin1Char('-') ? -1 : 1);
+    int hours     = timeZone.mid(1,2).toInt();
+    int minutes   = timeZone.mid(4,2).toInt();
+    int offsetSec = sign * (hours*3600 + minutes*60);
+
+    // 3) tell Qt “this QDateTime is offsetFromUTC by offsetSec”
+    QTimeZone zone = QTimeZone::fromSecondsAheadOfUtc(offsetSec);
+    dataTime.setTimeZone(zone);
+    return dataTime;
+}
+
 QList<QDateTime> VariableAbstract::readDateTimeMissing(
     const QDate &start, const QDate &end, const Tick &tick) const
 {
@@ -79,10 +98,12 @@ QList<QDateTime> VariableAbstract::readDateTimeMissing(
         // 4. Collect all recorded timestamps into a set
         while (query.next())
         {
-            QString s = query.value(0).toString();
-            QDateTime dt = QDateTime::fromString(s, Qt::ISODate);
+            const auto &date = query.value(0);
+            const QDateTime &dt = dateTimeFromDb(date);
             if (dt.isValid())
+            {
                 recorded.insert(dt);
+            }
         }
     }
 
@@ -92,13 +113,20 @@ QList<QDateTime> VariableAbstract::readDateTimeMissing(
     {
         if (!recorded.contains(cur))
         {
-            missingList.append(cur);
+            missingList.append(QDateTime(cur.date(), cur.time()));
         }
         else
         {
             int TEMP=0;++TEMP;
         }
     }
+    /*
+    for (const auto &missing : missingList)
+    {
+        auto TEMP=missing;
+        qDebug() << missing;
+    }
+//*/
 
     return missingList;
 }
@@ -145,7 +173,7 @@ QList<QDate> VariableAbstract::readMonthsMissing(const QList<QDateTime> &dateTim
         for (auto itMonth = itYear.value().begin();
              itMonth != itYear.value().end(); ++itMonth)
         {
-            dates << QDate{itYear.key(), itMonth.value(), 1};
+            dates << QDate{itYear.key(), itMonth.key(), 1};
         }
     }
     return dates;
@@ -251,8 +279,8 @@ QDateTime VariableAbstract::readDateTimeStart(const Tick &tick) const
         QVariant maxDateVariant = query.value(0);
         if (!maxDateVariant.isNull())
         {
+            lastDateTime = dateTimeFromDb(maxDateVariant);
             // Convert the retrieved string to QDateTime using ISO8601 format
-            lastDateTime = QDateTime::fromString(maxDateVariant.toString(), Qt::ISODate);
             if (!lastDateTime.isValid())
             {
                 qWarning() << "Invalid dateTime format retrieved:" << maxDateVariant.toString();
@@ -273,62 +301,19 @@ QDateTime VariableAbstract::readDateTimeStart(const Tick &tick) const
     return lastDateTime;
 }
 
-/*
-std::vector<std::thread> VariableAbstract::THREADS;
-QSet<StreamReaderAbstract *> VariableAbstract::allStreamReaders()
+QSharedPointer<QMap<QDateTime, double>> VariableAbstract::readData(
+    const Tick &tick,
+    const QString &typeValueId,
+    const QDateTime &dateFrom,
+    const QDateTime &dateTo)
 {
-    QSet<StreamReaderAbstract *> streamReaders;
-    for (const auto &variable : std::as_const(ALL_VARIABLES_BY_SYMBOL))
-    {
-        const auto &reader = variable->streamReader();
-        if (reader != nullptr)
-        {
-            streamReaders << reader;
-        }
-    }
-    return streamReaders;
-}
+    QSharedPointer<QMap<QDateTime, double>> data{new QMap<QDateTime, double>};
 
-void VariableAbstract::readAllStreams()
-{
-    const QSet<StreamReaderAbstract *> &streamReaders = allStreamReaders();
-    if (THREADS.size() > 0)
-    {
-        for (auto streamReader : streamReaders)
-        {
-            THREADS.emplace_back([streamReader](){
-                streamReader->readStream();
-            });
-        }
-    }
-}
-
-void VariableAbstract::stopReadingAllStreams()
-{
-    const QSet<StreamReaderAbstract *> &streamReaders = allStreamReaders();
-    for (auto streamReader : streamReaders)
-    {
-        streamReader->stopReadStream();
-    }
-    for (auto &thread : THREADS)
-    {
-        thread.join();
-    }
-    THREADS.clear();
-}
-//*/
-
-QSharedPointer<std::vector<double> > VariableAbstract::readData(
-        const Tick &tick,
-        const QString &typeValueId,
-        const QDateTime &dateFrom,
-        const QDateTime &dateTo)
-{
     QSqlDatabase db = getDatabaseOpened(tick.id());
     if (!db.isOpen())
     {
         qWarning() << "Database is not open!";
-        return QSharedPointer<std::vector<double>>(); // Return a null shared pointer
+        return data;
     }
 
     // 2. Define the table name (ensure it matches the one used in recordInDatabase)
@@ -340,13 +325,13 @@ QSharedPointer<std::vector<double> > VariableAbstract::readData(
     if (tableRecord.indexOf(colName) == -1)
     {
         qWarning() << "Column" << typeValueId << "does not exist in table" << tableName;
-        return QSharedPointer<std::vector<double>>(); // Return a null shared pointer
+        return data;
     }
 
     // 4. Prepare the SELECT query
     //    Select the value from the specified column within the date range
     QString selectQueryStr = QString(
-        "SELECT \"%1\" FROM %2 "
+        "SELECT dateTime, \"%1\" FROM %2 "
         "WHERE dateTime BETWEEN :dateFrom AND :dateTo "
         "ORDER BY dateTime ASC"
     ).arg(typeValueId, tableName);
@@ -355,7 +340,7 @@ QSharedPointer<std::vector<double> > VariableAbstract::readData(
     if (!selectQuery.prepare(selectQueryStr))
     {
         qWarning() << "Error preparing SELECT query:" << selectQuery.lastError().text();
-        return QSharedPointer<std::vector<double>>(); // Return a null shared pointer
+        return data;
     }
 
     // Bind the date parameters using ISO8601 format
@@ -366,18 +351,18 @@ QSharedPointer<std::vector<double> > VariableAbstract::readData(
     if (!selectQuery.exec())
     {
         qWarning() << "Error executing SELECT query:" << selectQuery.lastError().text();
-        return QSharedPointer<std::vector<double>>(); // Return a null shared pointer
+        return data;
     }
 
     // 6. Process the results
-    QSharedPointer<std::vector<double>> data = QSharedPointer<std::vector<double>>::create();
     while (selectQuery.next())
     {
-        QVariant valueVariant = selectQuery.value(0);
+        const auto &dateTimeVariant = selectQuery.value(0);
+        const auto &dateTime = dateTimeFromDb(dateTimeVariant);
+        QVariant valueVariant = selectQuery.value(1);
         if (valueVariant.isNull())
         {
-            // Handle NULL values if necessary
-            data->emplace_back(0.0); // Example: Insert 0.0 for NULLs
+            (*data)[dateTime] = 0.;
             continue;
         }
 
@@ -385,7 +370,7 @@ QSharedPointer<std::vector<double> > VariableAbstract::readData(
         double value = valueVariant.toDouble(&ok);
         if (ok)
         {
-            data->emplace_back(value);
+            (*data)[dateTime] = value;
         }
         else
         {
@@ -396,12 +381,11 @@ QSharedPointer<std::vector<double> > VariableAbstract::readData(
     return data;
 }
 
-QHash<QString, QSharedPointer<std::vector<double> > >
-VariableAbstract::readData(
+QSharedPointer<QHash<QString, QMap<QDateTime, double> > > VariableAbstract::readData(
         const Tick &tick,
         const QList<QString> &typeValueIds,
         const QDateTime &dateFrom,
-        const QDateTime &dateTo)
+    const QDateTime &dateTo) const
 {
     QSqlDatabase db = getDatabaseOpened(tick.id());
     if (!db.isOpen())
@@ -433,12 +417,12 @@ VariableAbstract::readData(
     // 4. Build a single SELECT query that retrieves all requested columns
     //    plus dateTime, filtered by [dateFrom, dateTo].
     //    We'll store results in a hash of vectors, keyed by column name.
-    QHash<QString, QSharedPointer<std::vector<double>>> resultHash;
+    QSharedPointer<QHash<QString, QMap<QDateTime, double>>> typeValue_date_value
+        {new QHash<QString, QMap<QDateTime, double>>{}};
     QStringList colNames;
     for (const QString &typeValueId : typeValueIds)
     {
         colNames << colName(typeValueId);
-        resultHash.insert(colNames.last(), QSharedPointer<std::vector<double>>::create());
     }
 
     // Construct the column list for the SELECT statement
@@ -478,32 +462,24 @@ VariableAbstract::readData(
         return {};
     }
 
-    // 5. Iterate over the result rows, extracting each requested column's value.
-    //    Index 0 is "dateTime", so the first requested column starts at index 1.
-    if (selectQuery.size() > 0)
-    {
-        for (auto &result : resultHash)
-        {
-            result->reserve(selectQuery.size());
-        }
-    }
-
     while (selectQuery.next())
     {
         // If you need `dateTime` from the DB, you can parse it here:
         // QString dbDateTime = selectQuery.value(0).toString();
 
+        const auto &dateTimeVariant = selectQuery.value(0);
+        const auto &dateTime = dateTimeFromDb(dateTimeVariant);
         // For each column in typeValueIds, read the corresponding field.
         for (int i = 0; i < typeValueIds.size(); ++i)
         {
             const QString &colName = colNames.at(i);
             double val = selectQuery.value(i + 1).toDouble(); // +1 because index 0 is dateTime
-            resultHash[colName]->push_back(val);
+            (*typeValue_date_value)[colName][dateTime] = val;
         }
     }
 
     // 6. Return the hash of results
-    return resultHash;
+    return typeValue_date_value;
 }
 
 void VariableAbstract::recordInDatabase(

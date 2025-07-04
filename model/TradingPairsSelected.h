@@ -19,6 +19,7 @@ public:
                           const QModelIndex &sourceParent) const override;
     bool filterAcceptsColumn(int source_column,
                              const QModelIndex &source_parent) const override;
+    Qt::ItemFlags flags(const QModelIndex& index) const override;
 };
 
 #endif // TRADINGPAIRSSELECTED_H

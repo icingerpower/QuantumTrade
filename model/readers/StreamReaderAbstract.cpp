@@ -44,25 +44,30 @@ QStringList StreamReaderAbstract::allSymbols()
     return symbols;
 }
 
-QMap<QString, VariableAvailability> StreamReaderAbstract::allAvailableVariables()
+const QMap<QString, VariableAvailability> &StreamReaderAbstract::allAvailableVariables()
 {
-    QMap<QString, VariableAvailability> variables;
-    for (const auto &streamReader : allStreamReaders())
+    static QMap<QString, VariableAvailability> variables
+        = []() -> QMap<QString, VariableAvailability>
     {
-        auto readerVariables = streamReader->availableVariables();
-        for (const auto &readerVariable : readerVariables)
+        QMap<QString, VariableAvailability> _variables;
+        for (const auto &streamReader : allStreamReaders())
         {
-            const QString &name = readerVariable.variable->name();
-            if (!variables.contains(name))
+            auto readerVariables = streamReader->availableVariables();
+            for (const auto &readerVariable : readerVariables)
             {
-                variables[name] = readerVariable;
-            }
-            else
-            {
-                variables[name].tickIds.unite(readerVariable.tickIds);
+                const QString &name = readerVariable.variable->name();
+                if (!_variables.contains(name))
+                {
+                    _variables[name] = readerVariable;
+                }
+                else
+                {
+                    _variables[name].tickIds.unite(readerVariable.tickIds);
+                }
             }
         }
-    }
+        return _variables;
+    }();
     return variables;
 }
 

@@ -37,10 +37,8 @@ struct AcpResults
 class FunctionACP
 {
 public:
-    virtual void init(std::vector<double> rowValues,
-                      int rowCount);
-    virtual void update(std::vector<double> rowValues,
-                        int indCurrent);
+    virtual void init(double targetValue, std::vector<double> rowValues);
+    virtual void update(double targetValue, std::vector<double> rowValues);
     virtual AcpResults computeFinal();
 };
 

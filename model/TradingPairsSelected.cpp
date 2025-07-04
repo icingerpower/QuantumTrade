@@ -26,3 +26,8 @@ bool TradingPairsSelected::filterAcceptsColumn(
 {
     return source_column == 0;
 }
+
+Qt::ItemFlags TradingPairsSelected::flags(const QModelIndex &index) const
+{
+    return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+}

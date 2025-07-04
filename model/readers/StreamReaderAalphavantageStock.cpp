@@ -179,8 +179,6 @@ void StreamReaderAalphavantageStock::readData(
             QString monthParam = month.toString("yyyy-MM");
 
             // Construct the API URL with required and optional parameters
-            auto tempHash = HASH_TICK;
-            auto tempId = tick.id();
             Q_ASSERT(HASH_TICK.contains(tick.id()));
             QString interval = HASH_TICK[tick.id()];
             QUrl url("https://www.alphavantage.co/query");

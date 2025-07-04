@@ -11,8 +11,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Sql Network)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Sql Network)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Charts Sql Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Charts Sql Network)
 
 
 set(PROJECT_VERSION_MAJOR 3)
@@ -41,6 +41,9 @@ set(PROJECT_SOURCES
         gui/PaneData.h
         gui/PaneData.cpp
         gui/PaneData.ui
+        gui/PaneSettings.h
+        gui/PaneSettings.cpp
+        gui/PaneSettings.ui
         "../common/types/types.h"
         "../common/types/types.cpp"
         ${MODEL_FILES}
@@ -51,8 +54,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(QuantumTrade
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        gui/PaneSettings.h gui/PaneSettings.cpp gui/PaneSettings.ui
-        model/ApiParams.h model/ApiParams.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET QuantumTrade APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -75,6 +76,7 @@ endif()
 target_link_libraries(QuantumTrade PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network
+    Qt${QT_VERSION_MAJOR}::Charts
     Qt${QT_VERSION_MAJOR}::Sql)
 
 set_target_properties(QuantumTrade PROPERTIES

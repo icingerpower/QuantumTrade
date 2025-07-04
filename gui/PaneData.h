@@ -26,12 +26,15 @@ public:
 private slots:
     void onTemplateSelected(
             const QItemSelection &selected, const QItemSelection &deselected);
+    void onPairSelected(
+            const QItemSelection &selected, const QItemSelection &deselected);
     void run(bool start);
 
 private:
     Ui::PaneData *ui;
     void _connectSlots();
     QSharedPointer<Job> m_job;
+    QMetaObject::Connection m_connectionPair;
 };
 
 #endif // PANEDATA_H

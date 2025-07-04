@@ -26,6 +26,7 @@ public:
     static const QList<TypeValue> TYPE_VALUES;
 
     static void setDatabaseFolder(const QString &dbFolderPath);
+    static QDateTime dateTimeFromDb(const QVariant &variantDate);
     //static std::vector<std::thread> THREADS;
     //static void readAllStreams();
     //static void stopReadingAllStreams();
@@ -51,14 +52,16 @@ public:
         const Tick &tick) const;
     QDateTime readDateTimeEnd(const Tick &tick) const;
     QDateTime readDateTimeStart(const Tick &tick) const;
-    QSharedPointer<std::vector<double>> readData(const Tick &tick,
-            const QString &typeValueId,
-            const QDateTime &dateFrom,
-            const QDateTime &dateTo);
-    QHash<QString, QSharedPointer<std::vector<double>>> readData(const Tick &tick,
-            const QList<QString> &typeValueIds,
-            const QDateTime &dateFrom,
-            const QDateTime &dateTo);
+    QSharedPointer<QMap<QDateTime, double>> readData(
+        const Tick &tick,
+        const QString &typeValueId,
+        const QDateTime &dateFrom,
+        const QDateTime &dateTo);
+    QSharedPointer<QHash<QString, QMap<QDateTime, double>>> readData(
+        const Tick &tick,
+        const QList<QString> &typeValueIds,
+        const QDateTime &dateFrom,
+        const QDateTime &dateTo) const;
 
     void recordInDatabase(
             const QDateTime &dateTime,

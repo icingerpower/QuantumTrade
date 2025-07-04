@@ -29,7 +29,7 @@ public:
     static const Param PARAM_MAX_PER_DAY_NAME_VALUE;
     StreamReaderAbstract();
     static QStringList allSymbols();
-    static QMap<QString, VariableAvailability> allAvailableVariables();
+    static const QMap<QString, VariableAvailability> &allAvailableVariables();
     static const QList<const StreamReaderAbstract *> & allStreamReaders();
 
     QMultiHash<QString, VariableAvailability> availableVariables(const Tick &tick) const;
