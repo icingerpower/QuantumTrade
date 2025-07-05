@@ -49,6 +49,11 @@ QDateTime VariableAbstract::dateTimeFromDb(const QVariant &variantDate)
     return dataTime;
 }
 
+QString VariableAbstract::getTableName(const Tick &tick) const
+{
+    return "values_" + tick.id();
+}
+
 QList<QDateTime> VariableAbstract::readDateTimeMissing(
     const QDate &start, const QDate &end, const Tick &tick) const
 {
@@ -63,7 +68,7 @@ QList<QDateTime> VariableAbstract::readDateTimeMissing(
     }
 
     // 2. Define the table name
-    const QString tableName = QStringLiteral("measurements");
+    const QString &tableName = getTableName(tick);
     QSet<QDateTime> recorded;
 
     QDateTime dtStart(start, QTime(0, 0, 0));
@@ -196,7 +201,7 @@ QDateTime VariableAbstract::readDateTimeEnd(const Tick &tick) const
     }
 
     // 2. Define the table name (ensure it matches the one used in recordInDatabase)
-    const QString tableName = QStringLiteral("measurements");
+    const QString &tableName = getTableName(tick);
 
     // 3. Check if the table exists
     if (!db.tables().contains(tableName))
@@ -254,7 +259,7 @@ QDateTime VariableAbstract::readDateTimeStart(const Tick &tick) const
     }
 
     // 2. Define the table name (ensure it matches the one used in recordInDatabase)
-    const QString tableName = QStringLiteral("measurements");
+    const QString &tableName = getTableName(tick);
 
     // 3. Check if the table exists
     if (!db.tables().contains(tableName))
@@ -317,7 +322,7 @@ QSharedPointer<QMap<QDateTime, double>> VariableAbstract::readData(
     }
 
     // 2. Define the table name (ensure it matches the one used in recordInDatabase)
-    const QString tableName = QStringLiteral("measurements");
+    const QString &tableName = getTableName(tick);
 
     // 3. Check if the column exists
     const QString &colName = this->colName(typeValueId);
@@ -397,7 +402,7 @@ QSharedPointer<QHash<QString, QMap<QDateTime, double> > > VariableAbstract::read
 
     // 2. Ensure the table (e.g. "measurements") exists.
     //    Adjust the schema to your needs if necessary.
-    const QString tableName = QStringLiteral("measurements");
+    const QString &tableName = getTableName(tick);
     {
         QString createTableQueryStr = QString(
             "CREATE TABLE IF NOT EXISTS %1 ("
@@ -498,7 +503,7 @@ void VariableAbstract::recordInDatabase(
 
     // 2. Ensure the table (e.g. "measurements") exists.
     //    Adjust the table name and schema to your needs.
-    const QString tableName = QStringLiteral("measurements");
+    const QString &tableName = getTableName(tick);
     QString createTableQueryStr = QString(
         "CREATE TABLE IF NOT EXISTS %1 ("
         "  dateTime TEXT PRIMARY KEY" // dateTime stored as ISO8601 string
@@ -573,7 +578,7 @@ void VariableAbstract::recordInDatabase(
     }
 
     // 2. Ensure the table (e.g. "measurements") exists
-    const QString tableName = QStringLiteral("measurements");
+    const QString &tableName = getTableName(tick);
     QString createTableQueryStr = QString(
         "CREATE TABLE IF NOT EXISTS %1 ("
         "  dateTime TEXT PRIMARY KEY"  // Primary key to prevent duplicates

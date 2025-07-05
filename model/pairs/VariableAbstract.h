@@ -33,6 +33,7 @@ public:
 
     virtual QString name() const = 0;
     virtual QString nameDataBase() const = 0;
+    QString getTableName(const Tick &tick) const;
 
     QList<QDateTime> readDateTimeMissing(
         const QDate &start,
