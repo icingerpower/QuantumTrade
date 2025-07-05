@@ -380,6 +380,10 @@ void StreamReaderAalphavantageStock::readData(
                     valueTypeIds << hashIt.key();
                     stockValues << ohlcv[hashIt.value()].toString().toDouble();
                 }
+                if (stockValues[1] > 3*stockValues[0])
+                {
+                    int TEMP=10;++TEMP; // There is a data reliability issue somewhere meaning max > 3*open
+                }
 
                 // Insert each OHLCV value into the database
                 for (int i = 0; i < valueTypeIds.size(); ++i)

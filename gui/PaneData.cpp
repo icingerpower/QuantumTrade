@@ -1,12 +1,13 @@
 #include <QTimer>
-#include <QChart>
-#include <QtCharts/QChartView>
+#include <QtCharts/QChart>
 #include <QtCharts/QValueAxis>
 #include <QtCharts/QBarCategoryAxis>
 #include <QtCharts/QBarSeries>
 #include <QtCharts/QBarSet>
 #include <QtCharts/QCandlestickSeries>
 #include <QtCharts/QCandlestickSet>
+#include <QtCharts/QDateTimeAxis>
+#include <QtCharts/QLogValueAxis>
 
 #include "../common/workingdirectory/WorkingDirectoryManager.h"
 
@@ -28,14 +29,27 @@ PaneData::PaneData(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->listViewTemplates->setModel(TemplateManager::instance());
-    ui->chartViewPrice->setChart(new QChart{});
-    ui->chartViewPrice->chart()->setBackgroundBrush(
-        Qt::lightGray);
+    for (auto chartView : getChartViews())
+    {
+        chartView->setChart(new QChart{});
+        chartView->chart()->setBackgroundBrush(
+                    Qt::lightGray);
+    }
     ui->buttonRun->setEnabled(false);
     _connectSlots();
+    ui->listChartType->setCurrentRow(0);
     ui->listViewTemplates->setCurrentIndex(
         TemplateManager::instance()->index(0,0));
     m_job = QSharedPointer<Job>{new Job};
+}
+
+QList<QChartView *> PaneData::getChartViews()
+{
+    return QList<QChartView *>{
+        ui->chartViewPrice
+                , ui->chartViewPriceLog
+                , ui->chartViewVolume
+    };
 }
 
 PaneData::~PaneData()
@@ -116,6 +130,11 @@ void PaneData::onTemplateSelected(
 
 void PaneData::onPairSelected(const QItemSelection &selected, const QItemSelection &deselected)
 {
+    QList<QChart *> currentCharts;
+    for (auto chartView : getChartViews())
+    {
+        currentCharts << chartView->chart();
+    }
     if (selected.size() > 0)
     {
         QString symbol{selected.indexes().first().data().toString()};
@@ -123,98 +142,158 @@ void PaneData::onPairSelected(const QItemSelection &selected, const QItemSelecti
         const auto *tick = getTemplateParamsSelected()->getTick();
         const auto &dateTimeStart = variableAvailability.variable->readDateTimeStart(*tick);
         const auto &dateTimeEnd = variableAvailability.variable->readDateTimeEnd(*tick);
-        ui->dateTimeEditFrom->setDateTime(dateTimeStart);
-        ui->dateTimeEditTo->setDateTime(dateTimeEnd);
-        QStringList valueTypes{
-                               VariableAbstract::TYPE_VALUE_OPEN.id
-                               , VariableAbstract::TYPE_VALUE_MAX.id
-                               , VariableAbstract::TYPE_VALUE_MIN.id
-                               , VariableAbstract::TYPE_VALUE_CLOSE.id
-                               , VariableAbstract::TYPE_VALUE_VOLUME.id};
-        auto data = variableAvailability.variable->readData(
-            *tick,
-            valueTypes,
-            dateTimeStart,
-            dateTimeEnd);
-        QChart *chart = new QChart();
-        chart->setBackgroundBrush(Qt::lightGray);
+        QChart *chartPrice = new QChart();
+        QChart *chartVol = new QChart();
+        QChart *chartPriceLog = new QChart();
+        chartPrice->setBackgroundBrush(Qt::lightGray);
+        chartVol->setBackgroundBrush(Qt::lightGray);
+        chartPriceLog->setBackgroundBrush(Qt::lightGray);
+        if (dateTimeStart.isValid())
+        {
+            ui->dateTimeEditFrom->setDateTime(dateTimeStart);
+            ui->dateTimeEditTo->setDateTime(dateTimeEnd);
+            QStringList valueTypes{
+                VariableAbstract::TYPE_VALUE_OPEN.id
+                        , VariableAbstract::TYPE_VALUE_MAX.id
+                        , VariableAbstract::TYPE_VALUE_MIN.id
+                        , VariableAbstract::TYPE_VALUE_CLOSE.id
+                        , VariableAbstract::TYPE_VALUE_VOLUME.id};
+            auto data = variableAvailability.variable->readData(
+                        *tick,
+                        valueTypes,
+                        dateTimeStart,
+                        dateTimeEnd);
 
-        const QMap<QDateTime,double>& openMap  = (*data)[VariableAbstract::TYPE_VALUE_OPEN.id];
-        const QMap<QDateTime,double>& highMap  = (*data)[VariableAbstract::TYPE_VALUE_MAX.id];
-        const QMap<QDateTime,double>& lowMap   = (*data)[VariableAbstract::TYPE_VALUE_MIN.id];
-        const QMap<QDateTime,double>& closeMap = (*data)[VariableAbstract::TYPE_VALUE_CLOSE.id];
-        const QMap<QDateTime,double>& volMap   = (*data)[VariableAbstract::TYPE_VALUE_VOLUME.id];
+            const QMap<QDateTime,double>& openMap  = (*data)[VariableAbstract::TYPE_VALUE_OPEN.id];
+            const QMap<QDateTime,double>& highMap  = (*data)[VariableAbstract::TYPE_VALUE_MAX.id];
+            const QMap<QDateTime,double>& lowMap   = (*data)[VariableAbstract::TYPE_VALUE_MIN.id];
+            const QMap<QDateTime,double>& closeMap = (*data)[VariableAbstract::TYPE_VALUE_CLOSE.id];
+            const QMap<QDateTime,double>& volMap   = (*data)[VariableAbstract::TYPE_VALUE_VOLUME.id];
+            //auto minMaxOpen = std::minmax_element(openMap.begin(), openMap.end());
+            //auto minMaxHigh = std::minmax_element(highMap.begin(), highMap.end());
+            //auto minMaxLow = std::minmax_element(lowMap.begin(), lowMap.end());
+            //auto minMaxClose = std::minmax_element(closeMap.begin(), closeMap.end());
+            if (openMap.size() > 0)
+            {
 
-        QList<QDateTime> times = openMap.keys();
-        std::sort(times.begin(), times.end());
-        if (times.isEmpty()) return;
+                QList<QDateTime> times = openMap.keys();
+                std::sort(times.begin(), times.end());
 
-        // 2) QCandlestickSeries
-        QCandlestickSeries* candleSeries = new QCandlestickSeries();
-        candleSeries->setName("Price");
-        candleSeries->setIncreasingColor(QColor(0,200,83));
-        candleSeries->setDecreasingColor(QColor(244,67,54));
-        candleSeries->setBodyOutlineVisible(false);
+                auto *candleSeries    = new QCandlestickSeries();
+                auto *candleSeriesLog = new QCandlestickSeries();
+                for (auto *cs : {candleSeries, candleSeriesLog}) {
+                    cs->setName("Price");
+                    cs->setIncreasingColor(QColor(0,200,83));
+                    cs->setDecreasingColor(QColor(244,67,54));
+                    cs->setBodyOutlineVisible(false);
+                }
 
-        for (const QDateTime& dt : times) {
-            qreal o = openMap[dt];
-            qreal h = highMap[dt];
-            qreal l = lowMap[dt];
-            qreal c = closeMap[dt];
-            candleSeries->append(new QCandlestickSet(o,h,l,c));
+                for (const auto &dt : times) {
+                    qreal o = openMap[dt],
+                          h = highMap[dt],
+                          l = lowMap[dt],
+                          c = closeMap[dt];
+                    qint64 ts = dt.toMSecsSinceEpoch();  // <-- crucial!
+                    candleSeries   ->append(new QCandlestickSet(o, h, l, c, ts));
+                    candleSeriesLog->append(new QCandlestickSet(o, h, l, c, ts));
+                }
+
+                // 2) Create **two separate** QDateTimeAxis, each ranged to [start, end]:
+                auto *axisXprice     = new QDateTimeAxis();
+                auto *axisXvol     = new QDateTimeAxis();
+                auto *axisXlog  = new QDateTimeAxis();
+                for (auto *ax : {axisXvol, axisXprice, axisXlog}) {
+                    ax->setFormat("yy-MM-dd");
+                    ax->setLabelsAngle(-45);
+                    //ax->setRange(dateTimeStart, dateTimeEnd);
+                    ax->setMin(dateTimeStart);
+                }
+
+                // 3) Linear price chart
+                chartPrice->setBackgroundBrush(Qt::lightGray);
+                chartPrice->setTitle(symbol + " — Price");
+                chartPrice->addSeries(candleSeries);
+
+                auto *axisYPrice = new QValueAxis();
+                axisYPrice->setTitleText("Price");
+                axisYPrice->setLabelFormat("%.2f");
+
+                chartPrice->addAxis(axisXprice, Qt::AlignBottom);
+                chartPrice->addAxis(axisYPrice, Qt::AlignLeft);
+                candleSeries->attachAxis(axisXprice);
+                candleSeries->attachAxis(axisYPrice);
+
+                // 4) Log‐scale price chart
+                chartPriceLog->setBackgroundBrush(Qt::lightGray);
+                chartPriceLog->setTitle(symbol + " — Price (log)");
+                chartPriceLog->addSeries(candleSeriesLog);
+
+                auto *axisYLog = new QLogValueAxis();
+                axisYLog->setTitleText("Price (log)");
+                axisYLog->setBase(10);
+                axisYLog->setLabelFormat("%.2f");
+                axisYLog->setMinorTickCount(9);
+
+                chartPriceLog->addAxis(axisXlog, Qt::AlignBottom);
+                chartPriceLog->addAxis(axisYLog, Qt::AlignLeft);
+                candleSeriesLog->attachAxis(axisXlog);
+                candleSeriesLog->attachAxis(axisYLog);
+
+                // !olume chart
+                auto *volSet = new QBarSet("Vol");
+                for (const auto &dt : times)
+                {
+                    *volSet << volMap[dt];
+                }
+                volSet->setBrush(QBrush(Qt::black));
+                volSet->setPen( QPen(Qt::black) );
+                auto *barVolumeSeries = new QBarSeries();
+                barVolumeSeries->append(volSet);
+
+                chartVol->setTitle(symbol + " — Volume");
+                chartVol->addSeries(barVolumeSeries);
+
+                // Volume Y-axis
+                auto *axisYVol = new QValueAxis();
+                axisYVol->setTitleText("Volume");
+                axisYVol->setGridLineVisible(false);
+                chartVol->addAxis(axisXvol, Qt::AlignBottom);
+                chartVol->addAxis(axisYVol, Qt::AlignLeft);
+                barVolumeSeries->attachAxis(axisXvol);
+                barVolumeSeries->attachAxis(axisYVol);
+
+            }
         }
-
-        // 3) QBarSeries pour le volume
-        QBarSet* volSet = new QBarSet("Vol");
-        for (const QDateTime& dt : times) {
-            *volSet << volMap[dt];
+        else
+        {
+            QDateTime nullDateTime{QDate{2000, 1, 1}, QTime{0, 0, 0}};
+            ui->dateTimeEditFrom->setDateTime(nullDateTime);
+            ui->dateTimeEditTo->setDateTime(nullDateTime);
         }
-        QBarSeries* barSeries = new QBarSeries();
-        barSeries->append(volSet);
-
-        // 4) Création du chart
-        chart->setTitle(symbol + " — Candlestick + Volume");
-        chart->addSeries(candleSeries);
-        chart->addSeries(barSeries);
-
-        // 5) Axe X (catégories)
-        QStringList categories;
-        categories.reserve(times.size());
-        for (const QDateTime& dt : times)
-            categories << dt.toString("MM-dd hh:mm");
-        QBarCategoryAxis* axisX = new QBarCategoryAxis();
-        axisX->append(categories);
-        axisX->setLabelsAngle(-90);
-        axisX->setGridLineVisible(false);
-
-        chart->addAxis(axisX, Qt::AlignBottom);
-        candleSeries->attachAxis(axisX);
-        barSeries->attachAxis(axisX);
-
-        // 6) Axe Y gauche (prix)
-        QValueAxis* axisYPrice = new QValueAxis();
-        axisYPrice->setTitleText("Price");
-        axisYPrice->setLabelFormat("%.2f");
-
-        chart->addAxis(axisYPrice, Qt::AlignLeft);
-        candleSeries->attachAxis(axisYPrice);
-
-        // 7) Axe Y droit (volume)
-        QValueAxis* axisYVol = new QValueAxis();
-        axisYVol->setTitleText("Volume");
-        axisYVol->setGridLineVisible(false);
-
-        chart->addAxis(axisYVol, Qt::AlignRight);
-        barSeries->attachAxis(axisYVol);
 
         // 8) Affectation au QChartView
-        ui->chartViewPrice->setChart(chart);
+        ui->chartViewVolume->setChart(chartVol);
+        ui->chartViewVolume->setRenderHint(QPainter::Antialiasing);
+        ui->chartViewPriceLog->setChart(chartPriceLog);
+        ui->chartViewPriceLog->setRenderHint(QPainter::Antialiasing);
+        ui->chartViewPrice->setChart(chartPrice);
         ui->chartViewPrice->setRenderHint(QPainter::Antialiasing);
     }
     else if (deselected.size() > 0)
     {
-
-
+        for (auto chartView : getChartViews())
+        {
+            chartView->setChart(new QChart{});
+            chartView->chart()->setBackgroundBrush(
+                        Qt::lightGray);
+        }
+    }
+    for (auto curChart : currentCharts)
+    {
+        if (curChart != nullptr)
+        {
+            curChart->deleteLater();
+        }
     }
 }
 

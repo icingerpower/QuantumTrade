@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QItemSelection>
+#include <QtCharts/QChartView>
 
 #include "model/readers/Job.h"
 
@@ -31,6 +32,7 @@ private slots:
     void run(bool start);
 
 private:
+    QList<QChartView *> getChartViews();
     Ui::PaneData *ui;
     void _connectSlots();
     QSharedPointer<Job> m_job;
