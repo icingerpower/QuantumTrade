@@ -5,6 +5,7 @@
 #include <QString>
 #include <QList>
 #include <QTimeZone>
+#include <QObject>
 
 #include "../common/utils/SortedMap.h"
 
@@ -14,8 +15,9 @@
 
 class VariableAbstract;
 
-class StreamReaderAbstract
+class StreamReaderAbstract : public QObject
 {
+    Q_OBJECT
 public:
     struct Param{
         QString name;
@@ -27,7 +29,7 @@ public:
     static const Param PARAM_ELASPED_MS_NAME_VALUE;
     static const QString PARAM_MAX_PER_DAY;
     static const Param PARAM_MAX_PER_DAY_NAME_VALUE;
-    StreamReaderAbstract();
+    StreamReaderAbstract(QObject *parent = nullptr);
     static QStringList allSymbols();
     static const QMap<QString, VariableAvailability> &allAvailableVariables();
     static const QList<const StreamReaderAbstract *> & allStreamReaders();
@@ -69,6 +71,10 @@ public:
     public:
         Recorder(const StreamReaderAbstract *streamReader);
     };
+
+signals:
+    void message(const QString &message) const;
+    void messageError(const QString &message) const;
 
 protected:
     static QVariant getSettingsValue(const QString &key,

@@ -150,7 +150,6 @@ void StreamReaderAalphavantageStock::readData(
 {
     _clearFinishedFutures();
 
-    QList<QPair<QDate, QDate>> dateRange;
     QString apiKey = params[PARAM_API_KEY].toString();
     int maxQueryPerDay = params[PARAM_MAX_PER_DAY].toInt();
     int queryElapsedMs = params[PARAM_ELASPED_MS].toInt();
@@ -199,6 +198,7 @@ void StreamReaderAalphavantageStock::readData(
             int retryCount = 0;
             QJsonObject jsonObject;
             qint64 msToWait = 0;
+            QString message1;
             while (!querySuccessful && retryCount < 10) // you can adjust the maximum retries if desired
             {
                 QString keyLastDayQuery = "StreamReaderAalphavantageStockLastDay";
@@ -212,7 +212,13 @@ void StreamReaderAalphavantageStock::readData(
                 {
                     nQueriesToday = getSettingsValue(keyNumberQuery, 0).toInt();
                 }
-                qDebug() << "nQueriesToday:" << nQueriesToday;
+                else
+                {
+                    setSettingsValue(keyNumberQuery, 0);
+                }
+                QString messageQueries = tr("Number of queries done today") + ": " + QString::number(nQueriesToday) + "/" + QString::number(maxQueryPerDay);
+                qDebug() << messageQueries;
+                emit message(messageQueries);
                 if (maxQueryPerDay > 0 && maxQueryPerDay == nQueriesToday)
                 {
                     auto tomorrow = current.addDays(1);
@@ -233,7 +239,9 @@ void StreamReaderAalphavantageStock::readData(
                 }
                 else if (msToWait > 0)
                 {
-                    qDebug() << "Waiting for" << msToWait / 1000 << "seconds";
+                    QString messageWait{name() + tr("Waiting for") + QString::number(msToWait / 1000) + tr("seconds")};
+                    emit message(messageWait);
+                    qDebug() << messageWait;
                     int intervalMs = 1000;
                     for (qint64 i = 0; i<msToWait; i+= intervalMs)
                     {
@@ -250,7 +258,10 @@ void StreamReaderAalphavantageStock::readData(
                 QObject::connect(&manager, &QNetworkAccessManager::finished, &loop, &QEventLoop::quit);
 
                 // Send the GET request
-                qDebug() << "URL alphavantage:" << url;
+                message1 = tr("alphavantage.co API URL:") + " ";
+                message1 += url.toString();
+                qDebug() << message1;
+                emit message(message1);
                 QNetworkReply *reply = manager.get(QNetworkRequest(QUrl(url)));
                 //++nQueriesToday; //TODO I stop here
 
@@ -263,6 +274,8 @@ void StreamReaderAalphavantageStock::readData(
                 // Handle network errors
                 if (reply->error() != QNetworkReply::NoError)
                 {
+                    const auto &errorString = reply->errorString();
+                    emit messageError(message1 + " " + tr("KO due to network error") + " - " + errorString);
                     qWarning() << "Network error while fetching data for symbol"
                                << stock->symbol()
                                << "and month"
@@ -282,6 +295,7 @@ void StreamReaderAalphavantageStock::readData(
                 QJsonDocument jsonResponse = QJsonDocument::fromJson(responseData);
                 if (jsonResponse.isNull() || !jsonResponse.isObject())
                 {
+                    emit messageError(message1 + " " + tr("KO due to json parsing error") + " - " + responseData);
                     qWarning() << "Invalid JSON response for symbol"
                                << stock->symbol()
                                << "and month"
@@ -297,6 +311,7 @@ void StreamReaderAalphavantageStock::readData(
                 // Check for API errors (other than rate limiting)
                 if (jsonObject.contains("Error Message"))
                 {
+                    emit messageError(message1 + " " + tr("KO due to API error") + " - " + jsonObject["Error Message"].toString());
                     qWarning() << "API Error for symbol"
                                << stock->symbol()
                                << "and month"
@@ -311,6 +326,7 @@ void StreamReaderAalphavantageStock::readData(
                 // Check if the API is returning a note (e.g. rate limit reached)
                 if (jsonObject.contains("Note"))
                 {
+                    emit messageError(message1 + " " + tr("KO due to API rate limit reached") + " - " + jsonObject["Note"].toString());
                     qWarning() << "API Note (rate limit reached) for symbol"
                                << stock->symbol()
                                << "and month"
@@ -336,6 +352,7 @@ void StreamReaderAalphavantageStock::readData(
             QString timeSeriesKey = QString("Time Series (%1)").arg(interval);
             if (!jsonObject.contains(timeSeriesKey))
             {
+                emit messageError(message1 + " " + tr("KO due to timestamp missing in the reply"));
                 qWarning() << "Time series data not found for symbol"
                            << stock->symbol()
                            << "and month"
@@ -346,6 +363,7 @@ void StreamReaderAalphavantageStock::readData(
 
             QJsonObject timeSeries = jsonObject[timeSeriesKey].toObject();
             QList<QDateTime> dateTimeMissingSetsTEMP{dateTimeMissingSet.begin(), dateTimeMissingSet.end()};
+            emit message(message1 + " " + tr("SUCCESSFUL with the following number of values") + ": " + QString::number(timeSeries.size()));
 
             // Iterate over each data point in the time series
             for (auto it = timeSeries.begin(); it != timeSeries.end(); ++it)

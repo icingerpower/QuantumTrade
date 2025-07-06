@@ -8,6 +8,7 @@
 #include <QtCharts/QCandlestickSet>
 #include <QtCharts/QDateTimeAxis>
 #include <QtCharts/QLogValueAxis>
+#include <QtCharts/QLineSeries>
 
 #include "../common/workingdirectory/WorkingDirectoryManager.h"
 
@@ -66,7 +67,34 @@ TradingPairsSelected *PaneData::getTradingPairsSelected() const
 TemplateParamsSelected *PaneData::getTemplateParamsSelected() const
 {
     return static_cast<TemplateParamsSelected *>(
-        ui->tableViewParams->model());
+                ui->tableViewParams->model());
+}
+
+void PaneData::writeMessage(const QString &message)
+{
+    _writeMessage(message, Qt::white);
+}
+
+void PaneData::_writeMessage(const QString &message, const QColor &color)
+{
+    QTextCursor cursor(ui->textEditLog->document());
+    cursor.movePosition(QTextCursor::End);
+
+    // 2) Prepare a char format with the desired color
+    QTextCharFormat fmt;
+    fmt.setForeground(color);
+
+    // 3) Insert the text (and a newline) with that format
+    cursor.insertText(message + QLatin1Char('\n'), fmt);
+
+    // 4) Make sure the QTextEdit scrolls to show the newly appended text
+    ui->textEditLog->setTextCursor(cursor);
+    ui->textEditLog->ensureCursorVisible();
+}
+
+void PaneData::writeMessageError(const QString &message)
+{
+    _writeMessage(message, Qt::red);
 }
 
 void PaneData::_connectSlots()
@@ -187,12 +215,16 @@ void PaneData::onPairSelected(const QItemSelection &selected, const QItemSelecti
                     cs->setDecreasingColor(QColor(244,67,54));
                     cs->setBodyOutlineVisible(false);
                 }
+                //auto minVal = lowMap.first();
+                //auto maxVal = highMap.first();
 
                 for (const auto &dt : times) {
                     qreal o = openMap[dt],
                           h = highMap[dt],
                           l = lowMap[dt],
                           c = closeMap[dt];
+                    //minVal = qMin(minVal, lowMap[dt]);
+                    //maxVal = qMax(maxVal, highMap[dt]);
                     qint64 ts = dt.toMSecsSinceEpoch();  // <-- crucial!
                     candleSeries   ->append(new QCandlestickSet(o, h, l, c, ts));
                     candleSeriesLog->append(new QCandlestickSet(o, h, l, c, ts));
@@ -230,9 +262,10 @@ void PaneData::onPairSelected(const QItemSelection &selected, const QItemSelecti
 
                 auto *axisYLog = new QLogValueAxis();
                 axisYLog->setTitleText("Price (log)");
-                axisYLog->setBase(10);
+                axisYLog->setBase(5);
                 axisYLog->setLabelFormat("%.2f");
                 axisYLog->setMinorTickCount(9);
+                //axisYLog->setRange(minVal, maxVal);
 
                 chartPriceLog->addAxis(axisXlog, Qt::AlignBottom);
                 chartPriceLog->addAxis(axisYLog, Qt::AlignLeft);
@@ -240,27 +273,29 @@ void PaneData::onPairSelected(const QItemSelection &selected, const QItemSelecti
                 candleSeriesLog->attachAxis(axisYLog);
 
                 // !olume chart
-                auto *volSet = new QBarSet("Vol");
-                for (const auto &dt : times)
+                auto *volSeries = new QLineSeries();
+                volSeries->setName("Vol");
+                for (auto &dt : times)
                 {
-                    *volSet << volMap[dt];
+                    qint64 ts = dt.toMSecsSinceEpoch();
+                    volSeries->append(ts, volMap[dt]);
                 }
-                volSet->setBrush(QBrush(Qt::black));
-                volSet->setPen( QPen(Qt::black) );
-                auto *barVolumeSeries = new QBarSeries();
-                barVolumeSeries->append(volSet);
 
-                chartVol->setTitle(symbol + " — Volume");
-                chartVol->addSeries(barVolumeSeries);
+                // 2) add it to the chart
+                chartVol->addSeries(volSeries);
 
-                // Volume Y-axis
+                // 3) attach your datetime axis
+                axisXvol->setRange(dateTimeStart, dateTimeEnd);
+                chartVol->addAxis(axisXvol, Qt::AlignBottom);
+                volSeries->attachAxis(axisXvol);
+
+                // 4) Y axis stays the same
                 auto *axisYVol = new QValueAxis();
                 axisYVol->setTitleText("Volume");
                 axisYVol->setGridLineVisible(false);
-                chartVol->addAxis(axisXvol, Qt::AlignBottom);
                 chartVol->addAxis(axisYVol, Qt::AlignLeft);
-                barVolumeSeries->attachAxis(axisXvol);
-                barVolumeSeries->attachAxis(axisYVol);
+                volSeries->attachAxis(axisYVol);
+
 
             }
         }
@@ -299,12 +334,16 @@ void PaneData::onPairSelected(const QItemSelection &selected, const QItemSelecti
 
 void PaneData::run(bool start)
 {
+    for (auto &connection : m_connectionStreamers)
+    {
+        disconnect(connection);
+    }
+    m_connectionStreamers.clear();
     if (start)
     {
         m_job->start();
         ui->listViewTemplates->setEnabled(false);
         auto selVariables = getTradingPairsSelected()->getSelectedVariables();
-        auto streamerVariables = getTemplateParamsSelected();
         const auto &symbols = selVariables.uniqueKeys();
         for (const auto &symbol : symbols)
         {
@@ -316,6 +355,19 @@ void PaneData::run(bool start)
             int nDays = getTemplateParamsSelected()->getValue(TemplateParams::PARAM_DAYS_DATA).toInt();
             const QDate &dateTo = QDate::currentDate();
             const QDate &dateFrom = dateTo.addDays(-nDays);
+            m_connectionStreamers
+                    << connect(firstVariableAvailable.streamReader,
+                               &StreamReaderAbstract::message,
+                               this,
+                               &PaneData::writeMessage,
+                               Qt::QueuedConnection);
+            m_connectionStreamers
+                    << connect(firstVariableAvailable.streamReader,
+                               &StreamReaderAbstract::messageError,
+                               this,
+                               &PaneData::writeMessageError,
+                               Qt::QueuedConnection);
+
             firstVariableAvailable.streamReader->readData(
                 params,
                 *tick,

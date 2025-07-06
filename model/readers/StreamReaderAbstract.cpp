@@ -23,7 +23,8 @@ StreamReaderAbstract::Recorder::Recorder(const StreamReaderAbstract *streamReade
     StreamReaderAbstract::ALL_STREAM_READERS << streamReader;
 }
 
-StreamReaderAbstract::StreamReaderAbstract()
+StreamReaderAbstract::StreamReaderAbstract(QObject *parent)
+    : QObject(parent)
 {
 
 }

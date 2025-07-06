@@ -24,6 +24,10 @@ public:
     TradingPairsSelected *getTradingPairsSelected() const;
     TemplateParamsSelected *getTemplateParamsSelected() const;
 
+public slots:
+    void writeMessage(const QString &message);
+    void writeMessageError(const QString &message);
+
 private slots:
     void onTemplateSelected(
             const QItemSelection &selected, const QItemSelection &deselected);
@@ -37,6 +41,8 @@ private:
     void _connectSlots();
     QSharedPointer<Job> m_job;
     QMetaObject::Connection m_connectionPair;
+    QList<QMetaObject::Connection> m_connectionStreamers;
+    void _writeMessage(const QString &message, const QColor &color);
 };
 
 #endif // PANEDATA_H
