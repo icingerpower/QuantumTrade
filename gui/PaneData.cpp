@@ -55,6 +55,7 @@ QList<QChartView *> PaneData::getChartViews()
 
 PaneData::~PaneData()
 {
+    m_job->stop();
     delete ui;
 }
 

@@ -25,6 +25,10 @@ StreamReaderAalphavantageStock::StreamReaderAalphavantageStock()
 {
 }
 
+StreamReaderAalphavantageStock::~StreamReaderAalphavantageStock()
+{
+}
+
 QString StreamReaderAalphavantageStock::id() const
 {
     return "StreamReaderAlphavantageStock";
@@ -239,7 +243,7 @@ void StreamReaderAalphavantageStock::readData(
                 }
                 else if (msToWait > 0)
                 {
-                    QString messageWait{name() + tr("Waiting for") + QString::number(msToWait / 1000) + tr("seconds")};
+                    QString messageWait{name() + " - " + tr("Waiting for") + " " + QString::number(msToWait / 1000) + " " + tr("seconds")};
                     emit message(messageWait);
                     qDebug() << messageWait;
                     int intervalMs = 1000;
