@@ -223,8 +223,10 @@ void StreamReaderAalphavantageStock::readData(
                 QString messageQueries = tr("Number of queries done today") + ": " + QString::number(nQueriesToday) + "/" + QString::number(maxQueryPerDay);
                 qDebug() << messageQueries;
                 emit message(messageQueries);
-                if (maxQueryPerDay > 0 && maxQueryPerDay == nQueriesToday)
+                if (maxQueryPerDay > 0 && nQueriesToday >= maxQueryPerDay)
                 {
+                    emit messageError(tr("Max number of query reached"));
+                    emit requestToStop();
                     auto tomorrow = current.addDays(1);
                     tomorrow.setTime(QTime{0, 0, 0});
                     msToWait = current.msecsTo(tomorrow);

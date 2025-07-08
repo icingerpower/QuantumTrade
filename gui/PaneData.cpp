@@ -1,4 +1,5 @@
 #include <QTimer>
+#include <QMessageBox>
 #include <QtCharts/QChart>
 #include <QtCharts/QValueAxis>
 #include <QtCharts/QBarCategoryAxis>
@@ -357,17 +358,33 @@ void PaneData::run(bool start)
             const QDate &dateTo = QDate::currentDate();
             const QDate &dateFrom = dateTo.addDays(-nDays);
             m_connectionStreamers
-                    << connect(firstVariableAvailable.streamReader,
-                               &StreamReaderAbstract::message,
-                               this,
-                               &PaneData::writeMessage,
-                               Qt::QueuedConnection);
+                << connect(firstVariableAvailable.streamReader,
+                           &StreamReaderAbstract::message,
+                           this,
+                           &PaneData::writeMessage,
+                           Qt::QueuedConnection);
             m_connectionStreamers
-                    << connect(firstVariableAvailable.streamReader,
-                               &StreamReaderAbstract::messageError,
-                               this,
-                               &PaneData::writeMessageError,
-                               Qt::QueuedConnection);
+                << connect(firstVariableAvailable.streamReader,
+                           &StreamReaderAbstract::messageError,
+                           this,
+                           &PaneData::writeMessageError,
+                           Qt::QueuedConnection);
+            m_connectionStreamers
+                << connect(firstVariableAvailable.streamReader,
+                           &StreamReaderAbstract::requestToStop,
+                           this,
+                           [this](){
+                               if (ui->buttonRun->isChecked())
+                               {
+                                   ui->buttonRun->setChecked(false);
+                                   run(false);
+                                   QMessageBox::information(
+                                       this,
+                                       tr("Run finished"),
+                                       tr("Data was retrieved"));
+                               }
+                           },
+                           Qt::QueuedConnection);
 
             firstVariableAvailable.streamReader->readData(
                 params,
@@ -383,7 +400,7 @@ void PaneData::run(bool start)
         m_job->stop();
         ui->listViewTemplates->setEnabled(true);
         ui->buttonRun->setEnabled(false);
-        QTimer::singleShot(2000, [this](){
+        QTimer::singleShot(2000, this, [this](){
             ui->buttonRun->setEnabled(true);
         });
     }

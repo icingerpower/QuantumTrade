@@ -75,6 +75,7 @@ public:
 signals:
     void message(const QString &message) const;
     void messageError(const QString &message) const;
+    void requestToStop() const;
 
 protected:
     static QVariant getSettingsValue(const QString &key,
